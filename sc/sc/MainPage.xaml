@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:sc"
+             x:Class="sc.MainPage">
+    <ContentPage.Content>
+        <StackLayout>
+
+            <Label HorizontalOptions="Center">Steam Login</Label>
+            <Entry Text="hyorigajjang" x:Name="Login" />
+            <Entry Text="" x:Name="Password" IsPassword="True" />
+            <Button Clicked="Button_OnClicked" HorizontalOptions="Center" />
+            <Button Clicked="Button2_OnClicked" HorizontalOptions="Center" />
+            <Button Clicked="Button3_OnClicked" HorizontalOptions="Center" />
+            </StackLayout>
+    </ContentPage.Content>
+</ContentPage>
