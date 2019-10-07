@@ -18,14 +18,7 @@ namespace sc
         }
         private void Button2_OnClicked(object sender, EventArgs e)
         {
-            if (SteamUser != null)
-            {
-                //Toast(SteamClient.SteamID.ToString(),Steam.EToastType.Message);
-                SteamUser.LogOff();
-               
-            }
-            else{Toast("login into your account first",Steam.EToastType.Warning);}
-
+          
         }
     }
 }

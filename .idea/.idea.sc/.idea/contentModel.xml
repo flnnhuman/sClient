@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ContentModelStore">
     <e p="C:\Program Files (x86)\Android\android-sdk\platforms\android-28\data\res" t="IncludeRecursive" />
-    <e p="C:\Users\pesec\.Rider2019.2\system\extResources" t="IncludeRecursive" />
-    <e p="C:\Users\pesec\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_sc.-1894586415.00" t="ExcludeRecursive" />
+    <e p="C:\Program Files (x86)\Android\android-sdk\sources\android-28" t="IncludeRecursive" />
+    <e p="C:\Users\pesec\.Rider2019.1\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\pesec\.Rider2019.1\system\resharper-host\local\Transient\ReSharperHost\v191\SolutionCaches\_sc.-1894586415.00" t="ExcludeRecursive" />
     <e p="C:\Users\pesec\Desktop\flnn\projects\sc" t="IncludeFlat">
       <e p="packages" t="ExcludeRecursive" />
       <e p="sc\sc" t="IncludeRecursive">
