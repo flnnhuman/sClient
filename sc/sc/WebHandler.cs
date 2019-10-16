@@ -1,58 +1,74 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
-using SteamKit2;
-using System.Collections.Immutable;
 using ArchiSteamFarm.Helpers;
+using SteamKit2;
 
-
-namespace sc
-{
-    public class WebHandler
-    {
-	    
+namespace sc {
+	public class WebHandler {
 		public const string SteamCommunityURL = "https://" + SteamCommunityHost;
-		
-		public static readonly WebBrowser WebBrowser;
 		public const string SteamHelpURL = "https://" + SteamHelpHost;
 		public const string SteamStoreURL = "https://" + SteamStoreHost;
 
-	    private const string IEconService = "IEconService";
-	    private const string IPlayerService = "IPlayerService";
-	    private const string ISteamApps = "ISteamApps";
-	    private const string ISteamUserAuth = "ISteamUserAuth";
-	    private const string ITwoFactorService = "ITwoFactorService";
-	    private const ushort MaxItemsInSingleInventoryRequest = 5000;
-	    private const byte MinSessionValidityInSeconds = GlobalConfig.DefaultConnectionTimeout / 6;
-	    private const string SteamCommunityHost = "steamcommunity.com";
-	    private const string SteamHelpHost = "help.steampowered.com";
-	    private const string SteamStoreHost = "store.steampowered.com";
-	    private static Logger Logger;
-        private string VanityURL;
-        private DateTime LastSessionCheck;
-        private DateTime LastSessionRefresh;
-        private bool Initialized;
-        private static GlobalConfig GlobalConfig;
-        private readonly Bot Bot;
-        public readonly ArchiCacheable<string> CachedApiKey;
-        
-        
-        
-        private static readonly ImmutableDictionary<string, (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore)> WebLimitingSemaphores = new Dictionary<string, (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore)>(4, StringComparer.Ordinal) {
-	        { nameof(WebHandler), (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections)) },
-	        { SteamCommunityURL, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections)) },
-	        { SteamHelpURL, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections)) },
-	        { SteamStoreURL, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections)) },
-	        { WebAPI.DefaultBaseAddress.Host, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections)) }
-        }.ToImmutableDictionary(StringComparer.Ordinal);
-        internal void OnVanityURLChanged(string vanityURL = null) => VanityURL = !string.IsNullOrEmpty(vanityURL) ? vanityURL : null;
+		private const string IEconService = "IEconService";
+		private const string IPlayerService = "IPlayerService";
+		private const string ISteamApps = "ISteamApps";
+		private const string ISteamUserAuth = "ISteamUserAuth";
+		private const string ITwoFactorService = "ITwoFactorService";
+		private const ushort MaxItemsInSingleInventoryRequest = 5000;
+		private const byte MinSessionValidityInSeconds = GlobalConfig.DefaultConnectionTimeout / 6;
+		private const string SteamCommunityHost = "steamcommunity.com";
+		private const string SteamHelpHost = "help.steampowered.com";
+		private const string SteamStoreHost = "store.steampowered.com";
 
-        		internal async Task<bool> Init(ulong steamID, EUniverse universe, string webAPIUserNonce, string parentalCode = null) {
+		public static readonly WebBrowser WebBrowser;
+		private static Logger Logger;
+		private static GlobalConfig GlobalConfig;
+
+
+		private static readonly ImmutableDictionary<string, (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore)> WebLimitingSemaphores = new Dictionary<string, (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore)>(4, StringComparer.Ordinal) {
+			{nameof(WebHandler), (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))},
+			{SteamCommunityURL, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))},
+			{SteamHelpURL, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))},
+			{SteamStoreURL, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))},
+			{WebAPI.DefaultBaseAddress.Host, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))}
+		}.ToImmutableDictionary(StringComparer.Ordinal);
+
+		private readonly Bot Bot;
+		public readonly ArchiCacheable<string> CachedApiKey;
+		private bool Initialized;
+		private DateTime LastSessionCheck;
+		private DateTime LastSessionRefresh;
+		private string VanityURL;
+
+		public async Task<string> GetAbsoluteProfileURL(bool waitForInitialization = true) {
+			if (waitForInitialization && !Initialized) {
+				for (byte i = 0; (i < GlobalConfig.ConnectionTimeout) && !Initialized && Bot.IsConnectedAndLoggedOn; i++) {
+					await Task.Delay(1000).ConfigureAwait(false);
+				}
+
+				if (!Initialized) {
+					Logger.LogGenericWarning(Strings.WarningFailed);
+
+					return null;
+				}
+			}
+
+			return string.IsNullOrEmpty(VanityURL) ? "/profiles/" + Bot.SteamID : "/id/" + VanityURL;
+		}
+
+		public async Task<bool?> HasValidApiKey() {
+			(bool success, string steamApiKey) = await CachedApiKey.GetValue().ConfigureAwait(false);
+
+			return success ? !string.IsNullOrEmpty(steamApiKey) : (bool?) null;
+		}
+
+		internal async Task<bool> Init(ulong steamID, EUniverse universe, string webAPIUserNonce, string parentalCode = null) {
 			if ((steamID == 0) || !new SteamID(steamID).IsIndividualAccount || (universe == EUniverse.Invalid) || !Enum.IsDefined(typeof(EUniverse), universe) || string.IsNullOrEmpty(webAPIUserNonce)) {
 				Logger.LogNullError(nameof(steamID) + " || " + nameof(universe) + " || " + nameof(webAPIUserNonce));
 
@@ -61,8 +77,7 @@ namespace sc
 
 			string sessionID = Convert.ToBase64String(Encoding.UTF8.GetBytes(steamID.ToString()));
 
-			
-			
+
 			// Generate a random 32-byte session key
 			byte[] sessionKey = CryptoHelper.GenerateRandomBlock(32);
 
@@ -97,9 +112,9 @@ namespace sc
 						// ReSharper disable once AccessToDisposedClosure
 						async () => await iSteamUserAuth.CallAsync(
 							HttpMethod.Post, "AuthenticateUser", args: new Dictionary<string, object>(3, StringComparer.Ordinal) {
-								{ "encrypted_loginkey", encryptedLoginKey },
-								{ "sessionkey", encryptedSessionKey },
-								{ "steamid", steamID }
+								{"encrypted_loginkey", encryptedLoginKey},
+								{"sessionkey", encryptedSessionKey},
+								{"steamid", steamID}
 							}
 						).ConfigureAwait(false)
 					).ConfigureAwait(false);
@@ -167,83 +182,65 @@ namespace sc
 
 			return true;
 		}
-            
-	    public async Task<bool?> HasValidApiKey() {
-		     (bool success, string steamApiKey) = await CachedApiKey.GetValue().ConfigureAwait(false);
-		    
-		     return success ? !string.IsNullOrEmpty(steamApiKey) : (bool?) null;
-	    }
-         private async Task<bool> UnlockParentalAccount(string parentalCode) {
-	         if (string.IsNullOrEmpty(parentalCode)) {
-		         Logger.LogNullError(nameof(parentalCode));
 
-		         return false;
-	         }
+		private async Task<bool> IsProfileUri(Uri uri, bool waitForInitialization = true) {
+			if (uri == null) {
+				Logger.LogNullError(nameof(uri));
 
-	         Logger.LogGenericInfo(Strings.UnlockingParentalAccount);
+				return false;
+			}
 
-	         if (!await UnlockParentalAccountForService(SteamCommunityURL, parentalCode).ConfigureAwait(false)) {
-		         Logger.LogGenericWarning(Strings.WarningFailed);
+			string profileURL = await GetAbsoluteProfileURL(waitForInitialization).ConfigureAwait(false);
 
-		         return false;
-	         }
+			if (string.IsNullOrEmpty(profileURL)) {
+				Logger.LogGenericWarning(Strings.WarningFailed);
 
-	         if (!await UnlockParentalAccountForService(SteamStoreURL, parentalCode).ConfigureAwait(false)) {
-		         Logger.LogGenericWarning(Strings.WarningFailed);
+				return false;
+			}
 
-		         return false;
-	         }
+			return uri.AbsolutePath.Equals(profileURL);
+		}
 
-	         Logger.LogGenericInfo(Strings.Success);
+		private static bool IsSessionExpiredUri(Uri uri) {
+			if (uri == null) {
+				Logger.LogNullError(nameof(uri));
 
-	         return true;
-         }
-	    
-         public static async Task<T> WebLimitRequest<T>(string service, Func<Task<T>> function) {
-	         if (string.IsNullOrEmpty(service) || (function == null)) {
-		         Logger.LogNullError(nameof(service) + " || " + nameof(function));
+				return false;
+			}
 
-		         return default;
-	         }
+			return uri.AbsolutePath.StartsWith("/login", StringComparison.Ordinal) || uri.Host.Equals("lostauth");
+		}
 
-	         if (GlobalConfig.WebLimiterDelay == 0) {
-		         return await function().ConfigureAwait(false);
-	         }
+		internal void OnVanityURLChanged(string vanityURL = null) => VanityURL = !string.IsNullOrEmpty(vanityURL) ? vanityURL : null;
 
-	         if (!WebLimitingSemaphores.TryGetValue(service, out (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore) limiters)) {
-		         Logger.LogGenericWarning(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(service), service));
+		private async Task<bool> UnlockParentalAccount(string parentalCode) {
+			if (string.IsNullOrEmpty(parentalCode)) {
+				Logger.LogNullError(nameof(parentalCode));
 
-		         if (!WebLimitingSemaphores.TryGetValue(nameof(WebHandler), out limiters)) {
-			         Logger.LogNullError(nameof(limiters));
+				return false;
+			}
 
-			         return await function().ConfigureAwait(false);
-		         }
-	         }
+			Logger.LogGenericInfo(Strings.UnlockingParentalAccount);
 
-	         // Sending a request opens a new connection
-	         await limiters.OpenConnectionsSemaphore.WaitAsync().ConfigureAwait(false);
+			if (!await UnlockParentalAccountForService(SteamCommunityURL, parentalCode).ConfigureAwait(false)) {
+				Logger.LogGenericWarning(Strings.WarningFailed);
 
-	         try {
-		         // It also increases number of requests
-		         await limiters.RateLimitingSemaphore.WaitAsync().ConfigureAwait(false);
+				return false;
+			}
 
-		         // We release rate-limiter semaphore regardless of our task completion, since we use that one only to guarantee rate-limiting of their creation
-		         Utilities.InBackground(
-			         async () => {
-				         await Task.Delay(GlobalConfig.WebLimiterDelay).ConfigureAwait(false);
-				         limiters.RateLimitingSemaphore.Release();
-			         }
-		         );
+			if (!await UnlockParentalAccountForService(SteamStoreURL, parentalCode).ConfigureAwait(false)) {
+				Logger.LogGenericWarning(Strings.WarningFailed);
 
-		         return await function().ConfigureAwait(false);
-	         } finally {
-		         // We release open connections semaphore only once we're indeed done sending a particular request
-		         limiters.OpenConnectionsSemaphore.Release();
-	         }
-         }
-         
-         
-        		private async Task<bool> UnlockParentalAccountForService(string serviceURL, string parentalCode, byte maxTries = WebBrowser.MaxTries) {
+				return false;
+			}
+
+			Logger.LogGenericInfo(Strings.Success);
+
+			return true;
+		}
+
+
+		private async Task<bool> UnlockParentalAccountForService(string serviceURL, string parentalCode, byte maxTries = WebBrowser.MaxTries) {
 			if (string.IsNullOrEmpty(serviceURL) || string.IsNullOrEmpty(parentalCode)) {
 				Logger.LogNullError(nameof(serviceURL) + " || " + nameof(parentalCode));
 
@@ -268,8 +265,8 @@ namespace sc
 			}
 
 			Dictionary<string, string> data = new Dictionary<string, string>(2, StringComparer.Ordinal) {
-				{ "pin", parentalCode },
-				{ "sessionid", sessionID }
+				{"pin", parentalCode},
+				{"sessionid", sessionID}
 			};
 
 			// This request doesn't go through UrlPostRetryWithSession as we have no access to session refresh capability (this is in fact session initialization)
@@ -289,47 +286,48 @@ namespace sc
 
 			return true;
 		}
-        
-                private async Task<bool> IsProfileUri(Uri uri, bool waitForInitialization = true) {
-	                if (uri == null) {
-		                Logger.LogNullError(nameof(uri));
 
-		                return false;
-	                }
+		public static async Task<T> WebLimitRequest<T>(string service, Func<Task<T>> function) {
+			if (string.IsNullOrEmpty(service) || (function == null)) {
+				Logger.LogNullError(nameof(service) + " || " + nameof(function));
 
-	                string profileURL = await GetAbsoluteProfileURL(waitForInitialization).ConfigureAwait(false);
+				return default;
+			}
 
-	                if (string.IsNullOrEmpty(profileURL)) {
-		                Logger.LogGenericWarning(Strings.WarningFailed);
+			if (GlobalConfig.WebLimiterDelay == 0) {
+				return await function().ConfigureAwait(false);
+			}
 
-		                return false;
-	                }
+			if (!WebLimitingSemaphores.TryGetValue(service, out (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore) limiters)) {
+				Logger.LogGenericWarning(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(service), service));
 
-	                return uri.AbsolutePath.Equals(profileURL);
-                }
-                public async Task<string> GetAbsoluteProfileURL(bool waitForInitialization = true) {
-	                if (waitForInitialization && !Initialized) {
-		                for (byte i = 0; (i < GlobalConfig.ConnectionTimeout) && !Initialized && Bot.IsConnectedAndLoggedOn; i++) {
-			                await Task.Delay(1000).ConfigureAwait(false);
-		                }
+				if (!WebLimitingSemaphores.TryGetValue(nameof(WebHandler), out limiters)) {
+					Logger.LogNullError(nameof(limiters));
 
-		                if (!Initialized) {
-			                Logger.LogGenericWarning(Strings.WarningFailed);
+					return await function().ConfigureAwait(false);
+				}
+			}
 
-			                return null;
-		                }
-	                }
+			// Sending a request opens a new connection
+			await limiters.OpenConnectionsSemaphore.WaitAsync().ConfigureAwait(false);
 
-	                return string.IsNullOrEmpty(VanityURL) ? "/profiles/" + Bot.SteamID : "/id/" + VanityURL;
-                }
-                private static bool IsSessionExpiredUri(Uri uri) {
-	                if (uri == null) {
-		                Logger.LogNullError(nameof(uri));
+			try {
+				// It also increases number of requests
+				await limiters.RateLimitingSemaphore.WaitAsync().ConfigureAwait(false);
 
-		                return false;
-	                }
+				// We release rate-limiter semaphore regardless of our task completion, since we use that one only to guarantee rate-limiting of their creation
+				Utilities.InBackground(
+					async () => {
+						await Task.Delay(GlobalConfig.WebLimiterDelay).ConfigureAwait(false);
+						limiters.RateLimitingSemaphore.Release();
+					}
+				);
 
-	                return uri.AbsolutePath.StartsWith("/login", StringComparison.Ordinal) || uri.Host.Equals("lostauth");
-                }
-    }
+				return await function().ConfigureAwait(false);
+			} finally {
+				// We release open connections semaphore only once we're indeed done sending a particular request
+				limiters.OpenConnectionsSemaphore.Release();
+			}
+		}
+	}
 }

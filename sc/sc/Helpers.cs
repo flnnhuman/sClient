@@ -22,17 +22,30 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-
 using JetBrains.Annotations;
 using sc;
 
 namespace ArchiSteamFarm.Helpers {
-	public sealed class ArchiCacheable<T> : IDisposable
-	{
-		private Logger Logger;
+	public sealed class ArchiCacheable<T> : IDisposable {
+		public enum EFallback : byte {
+			DefaultForType,
+			FailedNow,
+			SuccessPreviously
+		}
+
 		private readonly TimeSpan CacheLifetime;
 		private readonly SemaphoreSlim InitSemaphore = new SemaphoreSlim(1, 1);
 		private readonly Func<Task<(bool Success, T Result)>> ResolveFunction;
+
+		private DateTime InitializedAt;
+		private T InitializedValue;
+		private Logger Logger;
+		private Timer MaintenanceTimer;
+
+		public ArchiCacheable([NotNull] Func<Task<(bool Success, T Result)>> resolveFunction, TimeSpan? cacheLifetime = null) {
+			ResolveFunction = resolveFunction ?? throw new ArgumentNullException(nameof(resolveFunction));
+			CacheLifetime = cacheLifetime ?? Timeout.InfiniteTimeSpan;
+		}
 
 		private bool IsInitialized => InitializedAt > DateTime.MinValue;
 		private bool IsPermanentCache => CacheLifetime == Timeout.InfiniteTimeSpan;
@@ -40,15 +53,6 @@ namespace ArchiSteamFarm.Helpers {
 
 		// Purge should happen slightly after lifetime, to allow eventual refresh if the property is still used
 		private TimeSpan PurgeLifetime => CacheLifetime + TimeSpan.FromMinutes(5);
-
-		private DateTime InitializedAt;
-		private T InitializedValue;
-		private Timer MaintenanceTimer;
-
-		public ArchiCacheable([NotNull] Func<Task<(bool Success, T Result)>> resolveFunction, TimeSpan? cacheLifetime = null) {
-			ResolveFunction = resolveFunction ?? throw new ArgumentNullException(nameof(resolveFunction));
-			CacheLifetime = cacheLifetime ?? Timeout.InfiniteTimeSpan;
-		}
 
 		public void Dispose() {
 			// Those are objects that are always being created if constructor doesn't throw exception
@@ -116,6 +120,19 @@ namespace ArchiSteamFarm.Helpers {
 			}
 		}
 
+		private void HardReset(bool withValue = true) {
+			InitializedAt = DateTime.MinValue;
+
+			if (withValue) {
+				InitializedValue = default;
+			}
+
+			if (MaintenanceTimer != null) {
+				MaintenanceTimer.Dispose();
+				MaintenanceTimer = null;
+			}
+		}
+
 		[PublicAPI]
 		public async Task Reset() {
 			if (!IsInitialized) {
@@ -135,19 +152,6 @@ namespace ArchiSteamFarm.Helpers {
 			}
 		}
 
-		private void HardReset(bool withValue = true) {
-			InitializedAt = DateTime.MinValue;
-
-			if (withValue) {
-				InitializedValue = default;
-			}
-
-			if (MaintenanceTimer != null) {
-				MaintenanceTimer.Dispose();
-				MaintenanceTimer = null;
-			}
-		}
-
 		private async Task SoftReset() {
 			if (!IsInitialized || IsRecent) {
 				return;
@@ -164,12 +168,6 @@ namespace ArchiSteamFarm.Helpers {
 			} finally {
 				InitSemaphore.Release();
 			}
-		}
-
-		public enum EFallback : byte {
-			DefaultForType,
-			FailedNow,
-			SuccessPreviously
 		}
 	}
 }

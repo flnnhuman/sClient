@@ -4,22 +4,37 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-
-namespace sc
-{
-
-
+namespace sc {
+	// TODO: заменить на sqlite мб
 	public abstract class SerializableFile : IDisposable {
 		private readonly SemaphoreSlim FileSemaphore = new SemaphoreSlim(1, 1);
 
-		protected string FilePath { private get; set; }
+		private Logger _logger;
 
 		private bool ReadOnly;
 		private bool SavingScheduled;
 
-		private Logger _logger;
-		
+		protected string FilePath { private get; set; }
+
 		public virtual void Dispose() => FileSemaphore.Dispose();
+
+		internal async Task MakeReadOnly() {
+			if (ReadOnly) {
+				return;
+			}
+
+			await FileSemaphore.WaitAsync().ConfigureAwait(false);
+
+			try {
+				if (ReadOnly) {
+					return;
+				}
+
+				ReadOnly = true;
+			} finally {
+				FileSemaphore.Release();
+			}
+		}
 
 		public async Task Save() {
 			if (ReadOnly || string.IsNullOrEmpty(FilePath)) {
@@ -56,7 +71,7 @@ namespace sc
 				string newFilePath = FilePath + ".new";
 
 				// We always want to write entire content to temporary file first, in order to never load corrupted data, also when target file doesn't exist
-				 File.WriteAllText(newFilePath, json);
+				File.WriteAllText(newFilePath, json);
 
 				if (File.Exists(FilePath)) {
 					File.Replace(newFilePath, FilePath, null);
@@ -65,24 +80,6 @@ namespace sc
 				}
 			} catch (Exception e) {
 				_logger.LogGenericException(e);
-			} finally {
-				FileSemaphore.Release();
-			}
-		}
-
-		internal async Task MakeReadOnly() {
-			if (ReadOnly) {
-				return;
-			}
-
-			await FileSemaphore.WaitAsync().ConfigureAwait(false);
-
-			try {
-				if (ReadOnly) {
-					return;
-				}
-
-				ReadOnly = true;
 			} finally {
 				FileSemaphore.Release();
 			}
