@@ -2,9 +2,14 @@
 <project version="4">
   <component name="ContentModelStore">
     <e p="C:\Program Files (x86)\Android\android-sdk\platforms\android-28\data\res" t="IncludeRecursive" />
-    <e p="C:\Users\pesec\.Rider2019.2\system\extResources" t="IncludeRecursive" />
-    <e p="C:\Users\pesec\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_sc.-1768076253.00" t="ExcludeRecursive" />
-    <e p="C:\Users\pesec\RiderProjects\sClient" t="IncludeFlat">
+    <e p="C:\Program Files (x86)\Android\android-sdk\sources\android-28" t="IncludeRecursive" />
+    <e p="C:\Users\Vitaliy Chumakov\.Rider2019.2\config\consoles\db" t="IncludeRecursive" />
+    <e p="C:\Users\Vitaliy Chumakov\.Rider2019.2\config\extensions" t="IncludeRecursive" />
+    <e p="C:\Users\Vitaliy Chumakov\.Rider2019.2\config\scratches" t="IncludeRecursive" />
+    <e p="C:\Users\Vitaliy Chumakov\.Rider2019.2\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\Vitaliy Chumakov\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_sc.-1115340781.00" t="ExcludeRecursive" />
+    <e p="C:\Users\Vitaliy Chumakov\Projects\sClient" t="IncludeFlat">
+      <e p=".git\info\exclude" t="IncludeRecursive" />
       <e p="packages" t="ExcludeRecursive" />
       <e p="sc\sc" t="IncludeRecursive">
         <e p="App.xaml" t="Include" />
@@ -18,7 +23,6 @@
         <e p="GlobalDatabase.cs" t="Include" />
         <e p="Helpers.cs" t="Include" />
         <e p="Logger.cs" t="Include" />
-        <e p="Logging.cs" t="Include" />
         <e p="MainPage.xaml" t="Include" />
         <e p="MainPage.xaml.cs" t="Include" />
         <e p="obj" t="ExcludeRecursive">
