@@ -11,6 +11,15 @@ namespace sc
 {
     public class SCHandler: ClientMsgHandler
     {
+	    
+	    internal void RequestItemAnnouncements() {
+		    if (!Client.IsConnected) {
+			    return;
+		    }
+
+		    ClientMsgProtobuf<CMsgClientRequestItemAnnouncements> request = new ClientMsgProtobuf<CMsgClientRequestItemAnnouncements>(EMsg.ClientRequestItemAnnouncements);
+		    Client.Send(request);
+	    }
         private static readonly Logger Logger;
         private readonly SteamUnifiedMessages.UnifiedService<IChatRoom> UnifiedChatRoomService;
         private readonly SteamUnifiedMessages.UnifiedService<IClanChatRooms> UnifiedClanChatRoomsService;
@@ -115,6 +124,9 @@ namespace sc
 				}
 			}
 
+			
+		
+			
 			internal UserNotificationsCallback([NotNull] JobID jobID, [NotNull] CMsgClientItemAnnouncements msg) {
 				if ((jobID == null) || (msg == null)) {
 					throw new ArgumentNullException(nameof(jobID) + " || " + nameof(msg));
@@ -140,6 +152,20 @@ namespace sc
 				AccountAlerts
 			}
 		}
+            public void SetCurrentMode(uint chatMode) {
+	            if (chatMode == 0) {
+		            Logger.LogNullError(nameof(chatMode));
+
+		            return;
+	            }
+
+	            if (!Client.IsConnected) {
+		            return;
+	            }
+
+	            ClientMsgProtobuf<CMsgClientUIMode> request = new ClientMsgProtobuf<CMsgClientUIMode>(EMsg.ClientCurrentUIMode) { Body = { chat_mode = chatMode } };
+	            Client.Send(request);
+            }
             internal sealed class PlayingSessionStateCallback : CallbackMsg {
 	            internal readonly bool PlayingBlocked;
 

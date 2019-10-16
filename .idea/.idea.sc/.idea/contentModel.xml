@@ -13,8 +13,12 @@
         <e p="BotConfig.cs" t="Include" />
         <e p="BotDatabase.cs" t="Include" />
         <e p="Debugging.cs" t="Include" />
+        <e p="Events.cs" t="Include" />
         <e p="GlobalConfig.cs" t="Include" />
+        <e p="GlobalDatabase.cs" t="Include" />
+        <e p="Helpers.cs" t="Include" />
         <e p="Logger.cs" t="Include" />
+        <e p="Logging.cs" t="Include" />
         <e p="MainPage.xaml" t="Include" />
         <e p="MainPage.xaml.cs" t="Include" />
         <e p="obj" t="ExcludeRecursive">
@@ -33,6 +37,8 @@
         <e p="Strings.Designer.cs" t="Include" />
         <e p="Strings.resx" t="Include" />
         <e p="Utilities.cs" t="Include" />
+        <e p="WebBrowser.cs" t="Include" />
+        <e p="WebHandler.cs" t="Include" />
       </e>
       <e p="sc\sc.Android" t="IncludeRecursive">
         <e p="Assets" t="Include">

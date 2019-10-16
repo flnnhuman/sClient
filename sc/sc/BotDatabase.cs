@@ -38,8 +38,7 @@ namespace sc
        //     }
        // }
         
-        [JsonProperty(PropertyName = "_CellID", Required = Required.DisallowNull)]
-        private uint BackingCellID;
+        
         
         
         private BotDatabase([NotNull] string filePath) {
@@ -49,17 +48,6 @@ namespace sc
 
             FilePath = filePath;
         }
-        internal uint CellID
-        {
-            get => BackingCellID;
-
-            set
-            {
-                if (BackingCellID == value) return;
-
-                BackingCellID = value;
-                Utilities.InBackground(Save);
-            }
-        }
+  
     }
 }

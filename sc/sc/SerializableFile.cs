@@ -21,7 +21,7 @@ namespace sc
 		
 		public virtual void Dispose() => FileSemaphore.Dispose();
 
-		protected async Task Save() {
+		public async Task Save() {
 			if (ReadOnly || string.IsNullOrEmpty(FilePath)) {
 				return;
 			}

@@ -61,6 +61,24 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This account is limited, idling process is unavailable until the restriction is removed!.
+        /// </summary>
+        public static string BotAccountLimited {
+            get {
+                return ResourceManager.GetString("BotAccountLimited", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This account is locked, idling process is permanently unavailable!.
+        /// </summary>
+        public static string BotAccountLocked {
+            get {
+                return ResourceManager.GetString("BotAccountLocked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connected to Steam!.
         /// </summary>
         public static string BotConnected {
@@ -88,6 +106,15 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Disconnected from Steam!.
+        /// </summary>
+        public static string BotDisconnected {
+            get {
+                return ResourceManager.GetString("BotDisconnected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Disconnecting....
         /// </summary>
         public static string BotDisconnecting {
@@ -106,11 +133,84 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Successfully logged on as {0}..
+        /// </summary>
+        public static string BotLoggedOn {
+            get {
+                return ResourceManager.GetString("BotLoggedOn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Logging in....
         /// </summary>
         public static string BotLoggingIn {
             get {
                 return ResourceManager.GetString("BotLoggingIn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rate limit exceeded, we will retry after {0} of cooldown....
+        /// </summary>
+        public static string BotRateLimitExceeded {
+            get {
+                return ResourceManager.GetString("BotRateLimitExceeded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reconnecting....
+        /// </summary>
+        public static string BotReconnecting {
+            get {
+                return ResourceManager.GetString("BotReconnecting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removed expired login key!.
+        /// </summary>
+        public static string BotRemovedExpiredLoginKey {
+            get {
+                return ResourceManager.GetString("BotRemovedExpiredLoginKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stopping....
+        /// </summary>
+        public static string BotStopping {
+            get {
+                return ResourceManager.GetString("BotStopping", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to login to Steam: {0}/{1}.
+        /// </summary>
+        public static string BotUnableToLogin {
+            get {
+                return ResourceManager.GetString("BotUnableToLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Content:
+        ///{0}.
+        /// </summary>
+        public static string Content {
+            get {
+                return ResourceManager.GetString("Content", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Request failing: {0}.
+        /// </summary>
+        public static string ErrorFailingRequest {
+            get {
+                return ResourceManager.GetString("ErrorFailingRequest", resourceCulture);
             }
         }
         
@@ -124,11 +224,119 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Request failed after {0} attempts!.
+        /// </summary>
+        public static string ErrorRequestFailedTooManyTimes {
+            get {
+                return ResourceManager.GetString("ErrorRequestFailedTooManyTimes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Logging in to {0}....
+        /// </summary>
+        public static string LoggingIn {
+            get {
+                return ResourceManager.GetString("LoggingIn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Success!.
+        /// </summary>
+        public static string Success {
+            get {
+                return ResourceManager.GetString("Success", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unlocking parental account....
+        /// </summary>
+        public static string UnlockingParentalAccount {
+            get {
+                return ResourceManager.GetString("UnlockingParentalAccount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please enter your mobile authenticator device ID (including &quot;android:&quot;): .
+        /// </summary>
+        public static string UserInputDeviceID {
+            get {
+                return ResourceManager.GetString("UserInputDeviceID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please enter your 2FA code from your Steam authenticator app: .
+        /// </summary>
+        public static string UserInputSteam2FA {
+            get {
+                return ResourceManager.GetString("UserInputSteam2FA", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please enter SteamGuard auth code that was sent on your e-mail: .
+        /// </summary>
+        public static string UserInputSteamGuard {
+            get {
+                return ResourceManager.GetString("UserInputSteamGuard", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please enter your Steam login: .
+        /// </summary>
+        public static string UserInputSteamLogin {
+            get {
+                return ResourceManager.GetString("UserInputSteamLogin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please enter Steam parental code: .
+        /// </summary>
+        public static string UserInputSteamParentalCode {
+            get {
+                return ResourceManager.GetString("UserInputSteamParentalCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please enter your Steam password: .
+        /// </summary>
+        public static string UserInputSteamPassword {
+            get {
+                return ResourceManager.GetString("UserInputSteamPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed!.
+        /// </summary>
+        public static string WarningFailed {
+            get {
+                return ResourceManager.GetString("WarningFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Received unknown value for {0}, please report this: {1}.
         /// </summary>
         public static string WarningUnknownValuePleaseReport {
             get {
                 return ResourceManager.GetString("WarningUnknownValuePleaseReport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Workaround for {0} bug has been triggered..
+        /// </summary>
+        public static string WarningWorkaroundTriggered {
+            get {
+                return ResourceManager.GetString("WarningWorkaroundTriggered", resourceCulture);
             }
         }
     }

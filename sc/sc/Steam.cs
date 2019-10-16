@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
@@ -11,18 +12,31 @@ using Xamarin.Essentials;
 using Xamarin.Forms;
 using static sc.MainPage;
 using JetBrains.Annotations;
+using sc;
 
 namespace sc
 {
-    public class Bot
+	internal enum EUserInputType : byte {
+		Unknown,
+		DeviceID,
+		Login,
+		Password,
+		SteamGuard,
+		SteamParentalCode,
+		TwoFactorAuthentication
+	}
+	
+	public class Bot
     {
         private static readonly string CacheDir = FileSystem.CacheDirectory;
         private static readonly string MainDir = FileSystem.AppDataDirectory;
         private const ushort MaxMessageLength = 5000; // This is a limitation enforced by Steam
         private const byte MaxTwoFactorCodeFailures = 3;
         public readonly string BotName;
+        internal const byte MinPlayingBlockedTTL = 60; // Delay in seconds added when account was occupied during our disconnect, to not disconnect other Steam client session too soon
         private const uint LoginID = 1212;
-        public readonly Logger Logger;
+        public static readonly Logger Logger;
+        private const byte LoginCooldownInMinutes = 25; // Captcha disappears after around 20 minutes, so we make it 25
         
         private static readonly SemaphoreSlim BotsSemaphore = new SemaphoreSlim(1, 1);
         private static readonly SemaphoreSlim LoginRateLimitingSemaphore = new SemaphoreSlim(1, 1);
@@ -32,24 +46,43 @@ namespace sc
         private byte HeartBeatFailures;
         private Timer ConnectionFailureTimer;
 
+        internal bool PlayingWasBlocked { get; private set; }
+        private bool FirstTradeSent;
+        internal readonly ConcurrentDictionary<uint, (EPaymentMethod PaymentMethod, DateTime TimeCreated)> OwnedPackageIDs = new ConcurrentDictionary<uint, (EPaymentMethod PaymentMethod, DateTime TimeCreated)>();
         internal readonly SCHandler SCHandler;
         public ulong SteamID { get; private set; }
         
+        private EResult LastLogOnResult;
         public bool KeepRunning { get; private set; }
         
+        private Timer PlayingWasBlockedTimer;
         private bool ReconnectOnUserInitiated;
-        public readonly SteamConfiguration SteamConfiguration;
+        public  readonly SteamConfiguration SteamConfiguration;
         private readonly SteamClient SteamClient;
         private readonly CallbackManager CallbackManager;
         internal readonly SteamApps SteamApps;
         internal readonly SteamFriends SteamFriends;
         private readonly SteamUser SteamUser;
-
+        private uint ItemsCount;
+        private uint TradesCount;
+        private bool SteamParentalActive = true;
+        
+        public readonly WebHandler WebHandler;
+        
+        private Timer GamesRedeemerInBackgroundTimer;
+        private bool LibraryLocked;
         internal readonly BotDatabase BotDatabase;
         
         private string AuthCode;
         private string TwoFactorCode;
         private byte TwoFactorCodeFailures;
+        internal bool PlayingBlocked { get; private set; }
+        internal bool IsAccountLimited => AccountFlags.HasFlag(EAccountFlags.LimitedUser) || AccountFlags.HasFlag(EAccountFlags.LimitedUserForce);
+        internal bool IsAccountLocked => AccountFlags.HasFlag(EAccountFlags.Lockdown);
+
+        private string DeviceID;
+        public EAccountFlags AccountFlags { get; private set; }
+
         
        // internal bool HasMobileAuthenticator => BotDatabase?.MobileAuthenticator != null;
 
@@ -60,7 +93,7 @@ namespace sc
         public BotConfig BotConfig { get; private set; }
         
         public bool IsConnectedAndLoggedOn => SteamClient?.SteamID != null;
-        private uint BackingCellID;
+        
 
 
         private Bot([NotNull] string botName , [NotNull] BotConfig botConfig , [NotNull] BotDatabase botDatabase)
@@ -80,7 +113,7 @@ namespace sc
             //ArchiWebHandler = new ArchiWebHandler(this);
 
             SteamConfiguration = SteamConfiguration.Create(builder =>
-                    builder.WithProtocolTypes(SteamProtocols).WithCellID(BotDatabase.CellID)
+                    builder.WithProtocolTypes(SteamProtocols).WithCellID(GlobalDatabase.CellID)
                 /*.WithHttpClientFactory(ArchiWebHandler.GenerateDisposableHttpClient)*/);
 
             // Initialize
@@ -108,7 +141,7 @@ namespace sc
             SteamClient.AddHandler(SCHandler);
             CallbackManager = new CallbackManager(SteamClient);
             CallbackManager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
-         //            CallbackManager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
+            CallbackManager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
          //         
          //            SteamApps = SteamClient.GetHandler<SteamApps>();
          //            CallbackManager.Subscribe<SteamApps.GuestPassListCallback>(OnGuestPassList);
@@ -122,7 +155,7 @@ namespace sc
          //         
          //            SteamUser = SteamClient.GetHandler<SteamUser>();
          //            CallbackManager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
-         //            CallbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
+                     CallbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
          //            CallbackManager.Subscribe<SteamUser.LoginKeyCallback>(OnLoginKey);
          //            CallbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth);
          //            CallbackManager.Subscribe<SteamUser.WalletInfoCallback>(OnWalletUpdate);
@@ -250,7 +283,7 @@ namespace sc
             var logOnDetails = new SteamUser.LogOnDetails
             {
                 AuthCode = AuthCode,
-                CellID = BotDatabase.CellID,
+                CellID = GlobalDatabase.CellID,
                 LoginID = LoginID,
                 LoginKey = loginKey,
                 Password = password,
@@ -264,6 +297,276 @@ namespace sc
 
             SteamUser.LogOn(logOnDetails);
         }
+        private async void OnDisconnected(SteamClient.DisconnectedCallback callback) {
+			if (callback == null) {
+				Logger.LogNullError(nameof(callback));
+
+				return;
+			}
+
+			EResult lastLogOnResult = LastLogOnResult;
+			LastLogOnResult = EResult.Invalid;
+			ItemsCount = TradesCount = HeartBeatFailures = 0;
+			SteamParentalActive = true;
+			StopConnectionFailureTimer();
+			StopPlayingWasBlockedTimer();
+
+			Logger.LogGenericInfo(Strings.BotDisconnected);
+
+			OwnedPackageIDs.Clear();
+
+			//Actions.OnDisconnected();
+			//ArchiWebHandler.OnDisconnected();
+			//CardsFarmer.OnDisconnected(); 
+            //Trading.OnDisconnected();
+
+			FirstTradeSent = false;
+
+			//	await PluginsCore.OnBotDisconnected(this, callback.UserInitiated ? EResult.OK : lastLogOnResult).ConfigureAwait(false);
+
+			// If we initiated disconnect, do not attempt to reconnect
+			if (callback.UserInitiated && !ReconnectOnUserInitiated) {
+				return;
+			}
+
+			switch (lastLogOnResult) {
+				case EResult.AccountDisabled:
+				case EResult.InvalidPassword when string.IsNullOrEmpty(BotDatabase.LoginKey):
+					// Do not attempt to reconnect, those failures are permanent
+					return;
+				case EResult.Invalid:
+					// Invalid means that we didn't get OnLoggedOn() in the first place, so Steam is down
+					// Always reset one-time-only access tokens in this case, as OnLoggedOn() didn't do that for us
+					AuthCode = TwoFactorCode = null;
+
+					break;
+				case EResult.InvalidPassword:
+					BotDatabase.LoginKey = null;
+					Logger.LogGenericInfo(Strings.BotRemovedExpiredLoginKey);
+
+					break;
+				case EResult.NoConnection:
+				case EResult.ServiceUnavailable:
+				case EResult.Timeout:
+				case EResult.TryAnotherCM:
+					await Task.Delay(5000).ConfigureAwait(false);
+
+					break;
+				case EResult.RateLimitExceeded:
+					Logger.LogGenericInfo(string.Format(Strings.BotRateLimitExceeded, TimeSpan.FromMinutes(LoginCooldownInMinutes).ToHumanReadable()));
+
+					if (!await LoginRateLimitingSemaphore.WaitAsync(1000 * WebBrowser.MaxTries).ConfigureAwait(false)) {
+						break;
+					}
+
+					try {
+						await Task.Delay(LoginCooldownInMinutes * 60 * 1000).ConfigureAwait(false);
+					} finally {
+						LoginRateLimitingSemaphore.Release();
+					}
+
+					break;
+			}
+
+			if (!KeepRunning || SteamClient.IsConnected) {
+				return;
+			}
+
+			Logger.LogGenericInfo(Strings.BotReconnecting);
+			await Connect().ConfigureAwait(false);
+		}
+        private async void OnLoggedOn(SteamUser.LoggedOnCallback callback) {
+			if (callback == null) {
+				Logger.LogNullError(nameof(callback));
+
+				return;
+			}
+
+			// Always reset one-time-only access tokens
+			AuthCode = TwoFactorCode = null;
+
+			// Keep LastLogOnResult for OnDisconnected()
+			LastLogOnResult = callback.Result;
+
+			HeartBeatFailures = 0;
+			StopConnectionFailureTimer();
+
+			switch (callback.Result) {
+				case EResult.AccountDisabled:
+				case EResult.InvalidPassword when string.IsNullOrEmpty(BotDatabase.LoginKey):
+					// Those failures are permanent, we should Stop() the bot if any of those happen
+					Logger.LogGenericWarning(string.Format(Strings.BotUnableToLogin, callback.Result, callback.ExtendedResult));
+					Stop();
+
+					break;
+				case EResult.AccountLogonDenied:
+					string authCode = await Logging.GetUserInput(sc.EUserInputType.SteamGuard, BotName).ConfigureAwait(false);
+
+					if (string.IsNullOrEmpty(authCode)) {
+						Stop();
+
+						break;
+					}
+
+					SetUserInput(sc.EUserInputType.SteamGuard, authCode);
+
+					break;
+				case EResult.AccountLoginDeniedNeedTwoFactor:
+					//if (!HasMobileAuthenticator) {
+					//	string twoFactorCode = await Logging.GetUserInput(ASF.EUserInputType.TwoFactorAuthentication, BotName).ConfigureAwait(false);
+                    //
+					//	if (string.IsNullOrEmpty(twoFactorCode)) {
+					//		Stop();
+                    //
+					//		break;
+					//	}
+                    //
+					//	SetUserInput(ASF.EUserInputType.TwoFactorAuthentication, twoFactorCode);
+					//}
+
+					break;
+				case EResult.OK:
+					AccountFlags = callback.AccountFlags;
+					SteamID = callback.ClientSteamID;
+
+					Logger.LogGenericInfo(string.Format(Strings.BotLoggedOn, SteamID + (!string.IsNullOrEmpty(callback.VanityURL) ? "/" + callback.VanityURL : "")));
+
+					// Old status for these doesn't matter, we'll update them if needed
+					TwoFactorCodeFailures = 0;
+					LibraryLocked = PlayingBlocked = false;
+
+					if (PlayingWasBlocked && (PlayingWasBlockedTimer == null)) {
+						InitPlayingWasBlockedTimer();
+					}
+
+					if (IsAccountLimited) {
+						Logger.LogGenericWarning(Strings.BotAccountLimited);
+					}
+
+					if (IsAccountLocked) {
+						Logger.LogGenericWarning(Strings.BotAccountLocked);
+					}
+
+					if ((callback.CellID != 0) && (callback.CellID != GlobalDatabase.CellID)) { 
+						GlobalDatabase.CellID = callback.CellID;
+					}
+
+					// Handle steamID-based maFile
+				//	if (!HasMobileAuthenticator) {
+				//		string maFilePath = Path.Combine(SharedInfo.ConfigDirectory, SteamID + SharedInfo.MobileAuthenticatorExtension);
+                //
+				//		if (File.Exists(maFilePath)) {
+				//			await ImportAuthenticator(maFilePath).ConfigureAwait(false);
+				//		}
+				//	}
+
+				//	if (callback.ParentalSettings != null) {
+				//		(bool isSteamParentalEnabled, string steamParentalCode) = ValidateSteamParental(callback.ParentalSettings, BotConfig.SteamParentalCode);
+                //
+				//		if (isSteamParentalEnabled) {
+				//			SteamParentalActive = true;
+                //
+				//			if (!string.IsNullOrEmpty(steamParentalCode)) {
+				//				if (BotConfig.SteamParentalCode != steamParentalCode) {
+				//					SetUserInput(ASF.EUserInputType.SteamParentalCode, steamParentalCode);
+				//				}
+				//			} else if (string.IsNullOrEmpty(BotConfig.SteamParentalCode) || (BotConfig.SteamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
+				//				steamParentalCode = await Logging.GetUserInput(ASF.EUserInputType.SteamParentalCode, BotName).ConfigureAwait(false);
+                //
+				//				if (string.IsNullOrEmpty(steamParentalCode) || (steamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
+				//					Stop();
+                //
+				//					break;
+				//				}
+                //
+				//				SetUserInput(ASF.EUserInputType.SteamParentalCode, steamParentalCode);
+				//			}
+				//		} else {
+				//			SteamParentalActive = false;
+				//		}
+				//	} else if (SteamParentalActive && !string.IsNullOrEmpty(BotConfig.SteamParentalCode) && (BotConfig.SteamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
+				//		string steamParentalCode = await Logging.GetUserInput(ASF.EUserInputType.SteamParentalCode, BotName).ConfigureAwait(false);
+                //
+				//		if (string.IsNullOrEmpty(steamParentalCode) || (steamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
+				//			Stop();
+                //
+				//			break;
+				//		}
+                //
+				//		SetUserInput(ASF.EUserInputType.SteamParentalCode, steamParentalCode);
+				//	}
+
+					WebHandler.OnVanityURLChanged(callback.VanityURL);
+
+					if (!await WebHandler.Init(SteamID, SteamClient.Universe, callback.WebAPIUserNonce, SteamParentalActive ? BotConfig.SteamParentalCode : null).ConfigureAwait(false)) {
+						if (!await RefreshSession().ConfigureAwait(false)) {
+							break;
+						}
+					}
+
+					// Pre-fetch API key for future usage if possible
+					Utilities.InBackground(WebHandler.HasValidApiKey);
+
+				//	if ((GamesRedeemerInBackgroundTimer == null) && BotDatabase.HasGamesToRedeemInBackground) {
+				//		Utilities.InBackground(RedeemGamesInBackground);
+				//	}
+
+					SCHandler.SetCurrentMode(2);
+					SCHandler.RequestItemAnnouncements();
+
+					// Sometimes Steam won't send us our own PersonaStateCallback, so request it explicitly
+					RequestPersonaStateUpdate();
+
+					//	Utilities.InBackground(InitializeFamilySharing);
+					
+
+					if (BotConfig.OnlineStatus != EPersonaState.Offline) {
+						SteamFriends.SetPersonaState(BotConfig.OnlineStatus);
+					}
+
+					//	if (BotConfig.SteamMasterClanID != 0) {
+					//		Utilities.InBackground(
+					//			async () => {
+					//				if (!await ArchiWebHandler.JoinGroup(BotConfig.SteamMasterClanID).ConfigureAwait(false)) {
+					//					Logger.LogGenericWarning(string.Format(Strings.WarningFailedWithError, nameof(ArchiWebHandler.JoinGroup)));
+					//				}
+                    //	
+					//				await JoinMasterChatGroupID().ConfigureAwait(false);
+					//			}
+					//		);
+					//	}
+
+					//await PluginsCore.OnBotLoggedOn(this).ConfigureAwait(false);
+
+					break;
+				case EResult.InvalidPassword:
+				case EResult.NoConnection:
+				case EResult.PasswordRequiredToKickSession: // Not sure about this one, it seems to be just generic "try again"? #694
+				case EResult.RateLimitExceeded:
+				case EResult.ServiceUnavailable:
+				case EResult.Timeout:
+				case EResult.TryAnotherCM:
+				case EResult.TwoFactorCodeMismatch:
+					Logger.LogGenericWarning(string.Format(Strings.BotUnableToLogin, callback.Result, callback.ExtendedResult));
+
+				//		if ((callback.Result == EResult.TwoFactorCodeMismatch) && HasMobileAuthenticator) {
+				//			if (++TwoFactorCodeFailures >= MaxTwoFactorCodeFailures) {
+				//				TwoFactorCodeFailures = 0;
+				//				Logger.LogGenericError(string.Format(Strings.BotInvalidAuthenticatorDuringLogin, MaxTwoFactorCodeFailures));
+				//				Stop();
+				//			}
+				//		}
+
+					break;
+				default:
+					// Unexpected result, shutdown immediately
+					Logger.LogGenericError(string.Format(Strings.BotUnableToLogin, callback.Result, callback.ExtendedResult));
+					Stop();
+
+					break;
+			}
+		}
+
         private void StopConnectionFailureTimer() {
             if (ConnectionFailureTimer == null) {
                 return;
@@ -277,6 +580,24 @@ namespace sc
             StopConnectionFailureTimer();
             SteamClient.Disconnect();
         }
+        private void InitPlayingWasBlockedTimer() {
+	        if (PlayingWasBlockedTimer != null) {
+		        return;
+	        }
+
+	        PlayingWasBlockedTimer = new Timer(
+		        e => ResetPlayingWasBlockedWithTimer(),
+		        null,
+		        TimeSpan.FromSeconds(MinPlayingBlockedTTL), // Delay
+		        Timeout.InfiniteTimeSpan // Period
+	        );
+        }
+
+        private void ResetPlayingWasBlockedWithTimer() {
+	        PlayingWasBlocked = false;
+	        StopPlayingWasBlockedTimer();
+        }
+
         private void InitConnectionFailureTimer() {
             if (ConnectionFailureTimer != null) {
                 return;
@@ -320,7 +641,46 @@ namespace sc
             //await Destroy(true).ConfigureAwait(false);
            // await RegisterBot(BotName).ConfigureAwait(false);
         }
-        
+     
+        internal void RequestPersonaStateUpdate() {
+	        if (!IsConnectedAndLoggedOn) {
+		        return;
+	        }
+
+	        SteamFriends.RequestFriendInfo(SteamID, EClientPersonaStateFlag.PlayerName | EClientPersonaStateFlag.Presence);
+        }
+
+        internal async Task<bool> RefreshSession() {
+	        if (!IsConnectedAndLoggedOn) {
+		        return false;
+	        }
+
+	        SteamUser.WebAPIUserNonceCallback callback;
+
+	        try {
+		        callback = await SteamUser.RequestWebAPIUserNonce();
+	        } catch (Exception e) {
+		        Logger.LogGenericWarningException(e);
+		        await Connect(true).ConfigureAwait(false);
+
+		        return false;
+	        }
+
+	        if (string.IsNullOrEmpty(callback?.Nonce)) {
+		        await Connect(true).ConfigureAwait(false);
+
+		        return false;
+	        }
+
+	        if (await WebHandler.Init(SteamID, SteamClient.Universe, callback.Nonce, SteamParentalActive ? BotConfig.SteamParentalCode : null).ConfigureAwait(false)) {
+		        return true;
+	        }
+
+	        await Connect(true).ConfigureAwait(false);
+
+	        return false;
+        }
+
         private async Task Connect(bool force = false) {
             if (!force && (!KeepRunning || SteamClient.IsConnected)) {
                 return;
@@ -362,6 +722,86 @@ namespace sc
                 }
             }
         }
+        internal void Stop(bool skipShutdownEvent = false) {
+	        if (!KeepRunning) {
+		        return;
+	        }
+
+	        KeepRunning = false;
+	        Logger.LogGenericInfo(Strings.BotStopping);
+
+	        if (SteamClient.IsConnected) {
+		        Disconnect();
+	        }
+
+	        if (!skipShutdownEvent) {
+		        Utilities.InBackground(Events.OnBotShutdown);
+	        }
+        }
+
+        private void StopPlayingWasBlockedTimer() {
+            if (PlayingWasBlockedTimer == null) {
+                return;
+            }
+
+            PlayingWasBlockedTimer.Dispose();
+            PlayingWasBlockedTimer = null;
+        }
+        internal static string FormatBotResponse(string response, string botName) {
+	        if (string.IsNullOrEmpty(response) || string.IsNullOrEmpty(botName)) {
+		        Logger.LogNullError(nameof(response) + " || " + nameof(botName));
+
+		        return null;
+	        }
+
+	        return Environment.NewLine + "<" + botName + "> " + response;
+        }
+        
+        internal void SetUserInput(EUserInputType inputType, string inputValue) {
+	        if ((inputType == EUserInputType.Unknown) || string.IsNullOrEmpty(inputValue)) {
+		        Logger.LogNullError(nameof(inputType) + " || " + nameof(inputValue));
+	        }
+
+	        // This switch should cover ONLY bot properties
+	        switch (inputType) {
+		        case EUserInputType.DeviceID:
+			        DeviceID = inputValue;
+
+			        break;
+		        case EUserInputType.Login:
+			        if (BotConfig != null) {
+				        BotConfig.SteamLogin = inputValue;
+			        }
+
+			        break;
+		        case sc.EUserInputType.Password:
+			        if (BotConfig != null) {
+				        BotConfig.DecryptedSteamPassword = inputValue;
+			        }
+
+			        break;
+		        case EUserInputType.SteamGuard:
+			        AuthCode = inputValue;
+
+			        break;
+		        case EUserInputType.SteamParentalCode:
+			        if (BotConfig != null) {
+				        BotConfig.SteamParentalCode = inputValue;
+			        }
+
+			        break;
+		        case EUserInputType.TwoFactorAuthentication:
+			        TwoFactorCode = inputValue;
+
+			        break;
+		        default:
+			        Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(inputType), inputType));
+
+			        break;
+	        }
+        }
+
+
 
     }
 }

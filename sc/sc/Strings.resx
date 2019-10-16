@@ -44,6 +44,90 @@
     <data name="BotConnecting" xml:space="preserve">
     <value>Connecting...</value>
   </data>
+    <data name="BotDisconnected" xml:space="preserve">
+    <value>Disconnected from Steam!</value>
+  </data>
+    <data name="BotRemovedExpiredLoginKey" xml:space="preserve">
+    <value>Removed expired login key!</value>
+  </data>
+    <data name="BotRateLimitExceeded" xml:space="preserve">
+    <value>Rate limit exceeded, we will retry after {0} of cooldown...</value>
+        <comment>{0} will be replaced by translated TimeSpan string (such as "25 minutes")</comment>
+  </data>
+    <data name="BotReconnecting" xml:space="preserve">
+    <value>Reconnecting...</value>
+  </data>
+    <data name="BotUnableToLogin" xml:space="preserve">
+    <value>Unable to login to Steam: {0}/{1}</value>
+        <comment>{0} will be replaced by failure reason (string), {1} will be replaced by extended failure reason (string)</comment>
+  </data>
+    <data name="BotAccountLocked" xml:space="preserve">
+    <value>This account is locked, idling process is permanently unavailable!</value>
+  </data>
+    <data name="BotAccountLimited" xml:space="preserve">
+    <value>This account is limited, idling process is unavailable until the restriction is removed!</value>
+  </data>
+    <data name="BotLoggedOn" xml:space="preserve">
+    <value>Successfully logged on as {0}.</value>
+        <comment>{0} will be replaced by steam ID (number)</comment>
+  </data>
+    <data name="BotStopping" xml:space="preserve">
+    <value>Stopping...</value>
+  </data>
+    <data name="UserInputSteamLogin" xml:space="preserve">
+    <value>Please enter your Steam login: </value>
+        <comment>Please note that this translation should end with space</comment>
+  </data>
+    <data name="UserInputDeviceID" xml:space="preserve">
+    <value>Please enter your mobile authenticator device ID (including "android:"): </value>
+        <comment>Please note that this translation should end with space</comment>
+  </data>
+    <data name="UserInputSteamGuard" xml:space="preserve">
+    <value>Please enter SteamGuard auth code that was sent on your e-mail: </value>
+        <comment>Please note that this translation should end with space</comment>
+  </data>
+    <data name="UserInputSteamParentalCode" xml:space="preserve">
+    <value>Please enter Steam parental code: </value>
+        <comment>Please note that this translation should end with space</comment>
+  </data>
+    <data name="UserInputSteamPassword" xml:space="preserve">
+    <value>Please enter your Steam password: </value>
+        <comment>Please note that this translation should end with space</comment>
+  </data>
+    <data name="UserInputSteam2FA" xml:space="preserve">
+    <value>Please enter your 2FA code from your Steam authenticator app: </value>
+        <comment>Please note that this translation should end with space</comment>
+  </data>
+    <data name="Success" xml:space="preserve">
+    <value>Success!</value>
+  </data>
+    <data name="LoggingIn" xml:space="preserve">
+    <value>Logging in to {0}...</value>
+        <comment>{0} will be replaced by service's name</comment>
+  </data>
+    <data name="WarningFailed" xml:space="preserve">
+    <value>Failed!</value>
+  </data>
+    <data name="UnlockingParentalAccount" xml:space="preserve">
+    <value>Unlocking parental account...</value>
+  </data>
+    <data name="ErrorRequestFailedTooManyTimes" xml:space="preserve">
+    <value>Request failed after {0} attempts!</value>
+        <comment>{0} will be replaced by maximum number of tries</comment>
+  </data>
+    <data name="ErrorFailingRequest" xml:space="preserve">
+    <value>Request failing: {0}</value>
+        <comment>{0} will be replaced by URL of the request</comment>
+  </data>
+    <data name="WarningWorkaroundTriggered" xml:space="preserve">
+    <value>Workaround for {0} bug has been triggered.</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="Content" xml:space="preserve">
+    <value>Content:
+{0}</value>
+        <comment>{0} will be replaced by content string. Please note that this string should include newline for formatting.</comment>
+  </data>
 
 
 </root>

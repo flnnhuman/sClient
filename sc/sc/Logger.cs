@@ -74,6 +74,15 @@ namespace sc
 
             Debug.Print($"{previousMethodName}() {message}");
         }
+        public void LogGenericWarningException(Exception exception, [CallerMemberName] string previousMethodName = null) {
+            if (exception == null) {
+                LogNullError(nameof(exception));
+
+                return;
+            }
+
+            Debug.Print(exception.Message, $"{previousMethodName}()");
+        }
     }
     
 }
