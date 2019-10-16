@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static sc.Steam;
+using static sc.App;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using static sc.MainPage;
+
 namespace sc
 {
     [XamlCompilation(XamlCompilationOptions.Compile)]
@@ -16,9 +17,9 @@ namespace sc
         {
             InitializeComponent();
         }
+
         private void Button2_OnClicked(object sender, EventArgs e)
         {
-          
         }
     }
 }

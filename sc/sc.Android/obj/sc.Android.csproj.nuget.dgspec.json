@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc.Android\\sc.Android.csproj": {}
+    "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc.Android\\sc.Android.csproj": {}
   },
   "projects": {
-    "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc.Android\\sc.Android.csproj": {
+    "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc.Android\\sc.Android.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc.Android\\sc.Android.csproj",
+        "projectUniqueName": "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc.Android\\sc.Android.csproj",
         "projectName": "sc.Android",
-        "projectPath": "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc.Android\\sc.Android.csproj",
+        "projectPath": "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc.Android\\sc.Android.csproj",
         "packagesPath": "C:\\Users\\pesec\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc.Android\\obj\\",
+        "outputPath": "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc.Android\\obj\\",
         "projectStyle": "PackageReference",
         "skipContentFileWrite": true,
         "fallbackFolders": [
@@ -32,8 +32,8 @@
         "frameworks": {
           "monoandroid90": {
             "projectReferences": {
-              "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc\\sc.csproj": {
-                "projectPath": "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc\\sc.csproj"
+              "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc\\sc.csproj": {
+                "projectPath": "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc\\sc.csproj"
               }
             }
           }
@@ -45,6 +45,14 @@
             "Acr.UserDialogs": {
               "target": "Package",
               "version": "[7.0.27, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.7.9, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[12.0.2, )"
             },
             "Plugin.Toast": {
               "target": "Package",
@@ -86,14 +94,14 @@
         }
       }
     },
-    "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc\\sc.csproj": {
+    "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc\\sc.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc\\sc.csproj",
+        "projectUniqueName": "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc\\sc.csproj",
         "projectName": "sc",
-        "projectPath": "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc\\sc.csproj",
+        "projectPath": "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc\\sc.csproj",
         "packagesPath": "C:\\Users\\pesec\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\pesec\\Desktop\\flnn\\projects\\sc\\sc\\sc\\obj\\",
+        "outputPath": "C:\\Users\\pesec\\RiderProjects\\sClient\\sc\\sc\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Microsoft\\Xamarin\\NuGet",
@@ -129,11 +137,23 @@
               "target": "Package",
               "version": "[7.0.27, )"
             },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.7.9, )"
+            },
+            "JetBrains.Annotations": {
+              "target": "Package",
+              "version": "[2019.1.3, )"
+            },
             "NETStandard.Library": {
               "suppressParent": "All",
               "target": "Package",
               "version": "[2.0.3, )",
               "autoReferenced": true
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[12.0.2, )"
             },
             "Plugin.Toast": {
               "target": "Package",

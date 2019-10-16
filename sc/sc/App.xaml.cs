@@ -28,6 +28,5 @@ namespace sc
         {
             // Handle when your app resumes
         }
-
     }
 }

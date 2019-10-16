@@ -19,7 +19,7 @@ namespace sc.Android
             ToolbarResource = Resource.Layout.Toolbar;
             UserDialogs.Init(this);
             base.OnCreate(savedInstanceState);
-            global::Xamarin.Forms.Forms.Init(this, savedInstanceState);
+            Xamarin.Forms.Forms.Init(this, savedInstanceState);
             LoadApplication(new App());
         }
     }
