@@ -11,7 +11,7 @@ namespace sc
 #endif
 
 
-        internal static bool IsDebugConfigured => GlobalConfig.Debug;
+        internal static bool IsDebugConfigured => sc.GlobalConfig.Debug;
 
         internal static bool IsUserDebugging => IsDebugBuild || IsDebugConfigured;
 

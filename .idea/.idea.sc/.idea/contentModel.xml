@@ -23,6 +23,7 @@
         <e p="GlobalDatabase.cs" t="Include" />
         <e p="Helpers.cs" t="Include" />
         <e p="Logger.cs" t="Include" />
+        <e p="Logging.cs" t="Include" />
         <e p="MainPage.xaml" t="Include" />
         <e p="MainPage.xaml.cs" t="Include" />
         <e p="obj" t="ExcludeRecursive">

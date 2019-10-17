@@ -136,7 +136,7 @@ namespace sc
             WebHandler = new WebHandler();
 
             SteamConfiguration = SteamConfiguration.Create(builder =>
-                    builder.WithProtocolTypes(SteamProtocols).WithCellID(GlobalDatabase.CellID)
+                    builder.WithProtocolTypes(SteamProtocols).WithCellID(sc.GlobalDatabase.CellID)
                 /*.WithHttpClientFactory(ArchiWebHandler.GenerateDisposableHttpClient)*/);
 
             // Initialize
@@ -197,7 +197,7 @@ namespace sc
                 async e => await HeartBeat().ConfigureAwait(false),
                 null,
                 TimeSpan.FromMinutes(1) +
-                TimeSpan.FromSeconds(GlobalConfig.LoginLimiterDelay /** Bots.Count*/), // Delay
+                TimeSpan.FromSeconds(sc.GlobalConfig.LoginLimiterDelay /** Bots.Count*/), // Delay
                 TimeSpan.FromMinutes(1) // Period
             );
         }
@@ -391,7 +391,7 @@ namespace sc
             var logOnDetails = new SteamUser.LogOnDetails
             {
                 AuthCode = AuthCode,
-                CellID = GlobalDatabase.CellID,
+                CellID = sc.GlobalDatabase.CellID,
                 LoginID = LoginID,
                 LoginKey = loginKey,
                 Password = password,
@@ -516,6 +516,7 @@ namespace sc
 
                     break;
                 case EResult.AccountLogonDenied:
+                    /*
                     var authCode = await Logging.GetUserInput(sc.EUserInputType.SteamGuard, BotName)
                         .ConfigureAwait(false);
 
@@ -527,6 +528,7 @@ namespace sc
                     }
 
                     SetUserInput(EUserInputType.SteamGuard, authCode);
+                    */
 
                     break;
                 case EResult.AccountLoginDeniedNeedTwoFactor:
@@ -560,8 +562,8 @@ namespace sc
 
                     if (IsAccountLocked) Logger.LogGenericWarning(Strings.BotAccountLocked);
 
-                    if (callback.CellID != 0 && callback.CellID != GlobalDatabase.CellID)
-                        GlobalDatabase.CellID = callback.CellID;
+                    if (callback.CellID != 0 && callback.CellID != sc.GlobalDatabase.CellID)
+                        sc.GlobalDatabase.CellID = callback.CellID;
 
                     // Handle steamID-based maFile
                     //	if (!HasMobileAuthenticator) {
@@ -724,14 +726,14 @@ namespace sc
             ConnectionFailureTimer = new Timer(
                 async e => await InitPermanentConnectionFailure().ConfigureAwait(false),
                 null,
-                TimeSpan.FromMinutes(Math.Ceiling(GlobalConfig.ConnectionTimeout / 30.0)), // Delay
+                TimeSpan.FromMinutes(Math.Ceiling(sc.GlobalConfig.ConnectionTimeout / 30.0)), // Delay
                 Timeout.InfiniteTimeSpan // Period
             );
         }
 
         private static async Task LimitLoginRequestsAsync()
         {
-            if (GlobalConfig.LoginLimiterDelay == 0)
+            if (sc.GlobalConfig.LoginLimiterDelay == 0)
             {
                 await LoginRateLimitingSemaphore.WaitAsync().ConfigureAwait(false);
                 LoginRateLimitingSemaphore.Release();
@@ -751,7 +753,7 @@ namespace sc
                 Utilities.InBackground(
                     async () =>
                     {
-                        await Task.Delay(GlobalConfig.LoginLimiterDelay * 1000).ConfigureAwait(false);
+                        await Task.Delay(sc.GlobalConfig.LoginLimiterDelay * 1000).ConfigureAwait(false);
                         LoginSemaphore.Release();
                     }
                 );
@@ -827,7 +829,7 @@ namespace sc
 
             try
             {
-                if (DateTime.UtcNow.Subtract(SCHandler.LastPacketReceived).TotalSeconds > GlobalConfig.ConnectionTimeout
+                if (DateTime.UtcNow.Subtract(SCHandler.LastPacketReceived).TotalSeconds > sc.GlobalConfig.ConnectionTimeout
                 ) await SteamFriends.RequestProfileInfo(SteamID);
 
                 HeartBeatFailures = 0;
@@ -838,7 +840,7 @@ namespace sc
 
                 if (!KeepRunning || !IsConnectedAndLoggedOn || HeartBeatFailures == byte.MaxValue) return;
 
-                if (++HeartBeatFailures >= (byte) Math.Ceiling(GlobalConfig.ConnectionTimeout / 10.0))
+                if (++HeartBeatFailures >= (byte) Math.Ceiling(sc.GlobalConfig.ConnectionTimeout / 10.0))
                 {
                     HeartBeatFailures = byte.MaxValue;
                     Logger.LogGenericWarning(Strings.BotConnectionLost);

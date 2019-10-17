@@ -4,12 +4,10 @@ namespace sc
 {
     public sealed class GlobalDatabase : SerializableFile
     {
-        private static SerializableFile _serializableFile;
-
         [JsonProperty(PropertyName = "_CellID", Required = Required.DisallowNull)]
-        private static uint BackingCellID;
+        private uint BackingCellID;
 
-        internal static uint CellID
+        internal uint CellID
         {
             get => BackingCellID;
 
@@ -18,7 +16,7 @@ namespace sc
                 if (BackingCellID == value) return;
 
                 BackingCellID = value;
-                Utilities.InBackground(_serializableFile.Save);
+                Utilities.InBackground(Save);
             }
         }
     }
