@@ -8,11 +8,10 @@
         <StackLayout>
 
             <Label HorizontalOptions="Center">Steam Login</Label>
-            <Entry Text="hyorigajjang" x:Name="Login" />
-            <Entry Text="" x:Name="Password" IsPassword="True" />
+            <Entry Text="LOGIN" x:Name="LoginField" />
+            <Entry Text="" x:Name="PasswordField" IsPassword="True" />
+            <Entry Text="" x:Name="TwoFactorCodeField" />
             <Button Clicked="Button_OnClicked" HorizontalOptions="Center" />
-            <Button Clicked="Button2_OnClicked" HorizontalOptions="Center" />
-            <Button Clicked="Button3_OnClicked" HorizontalOptions="Center" />
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>

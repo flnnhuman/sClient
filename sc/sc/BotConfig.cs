@@ -9,8 +9,8 @@ namespace sc
         private const EPersonaState DefaultOnlineStatus = EPersonaState.Online;
         private const bool DefaultUseLoginKeys = true;
         public readonly bool UseLoginKeys = DefaultUseLoginKeys;
-        private const string DefaultSteamLogin = "randomflbnacr";
-        private const string DefaultSteamPassword = "Fdk&!!k184";
+        private const string DefaultSteamLogin = "";
+        private const string DefaultSteamPassword = "";
 
         public string SteamLogin = DefaultSteamLogin;
         public string SteamPassword = DefaultSteamPassword;
