@@ -25,149 +25,156 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using sc;
 
-namespace ArchiSteamFarm.Helpers {
-	public sealed class ArchiCacheable<T> : IDisposable {
-		public enum EFallback : byte {
-			DefaultForType,
-			FailedNow,
-			SuccessPreviously
-		}
+namespace sc.Helpers
+{
+    public sealed class ArchiCacheable<T> : IDisposable
+    {
+        private readonly TimeSpan CacheLifetime;
+        private readonly SemaphoreSlim InitSemaphore = new SemaphoreSlim(1, 1);
+        private readonly Func<Task<(bool Success, T Result)>> ResolveFunction;
 
-		private readonly TimeSpan CacheLifetime;
-		private readonly SemaphoreSlim InitSemaphore = new SemaphoreSlim(1, 1);
-		private readonly Func<Task<(bool Success, T Result)>> ResolveFunction;
+        private bool IsInitialized => InitializedAt > DateTime.MinValue;
+        private bool IsPermanentCache => CacheLifetime == Timeout.InfiniteTimeSpan;
+        private bool IsRecent => IsPermanentCache || DateTime.UtcNow.Subtract(InitializedAt) < CacheLifetime;
 
-		private DateTime InitializedAt;
-		private T InitializedValue;
-		private Logger Logger;
-		private Timer MaintenanceTimer;
+        // Purge should happen slightly after lifetime, to allow eventual refresh if the property is still used
+        private TimeSpan PurgeLifetime => CacheLifetime + TimeSpan.FromMinutes(5);
 
-		public ArchiCacheable([NotNull] Func<Task<(bool Success, T Result)>> resolveFunction, TimeSpan? cacheLifetime = null) {
-			ResolveFunction = resolveFunction ?? throw new ArgumentNullException(nameof(resolveFunction));
-			CacheLifetime = cacheLifetime ?? Timeout.InfiniteTimeSpan;
-		}
+        private DateTime InitializedAt;
+        private T InitializedValue;
+        private Timer MaintenanceTimer;
 
-		private bool IsInitialized => InitializedAt > DateTime.MinValue;
-		private bool IsPermanentCache => CacheLifetime == Timeout.InfiniteTimeSpan;
-		private bool IsRecent => IsPermanentCache || (DateTime.UtcNow.Subtract(InitializedAt) < CacheLifetime);
+        public ArchiCacheable([NotNull] Func<Task<(bool Success, T Result)>> resolveFunction,
+            TimeSpan? cacheLifetime = null)
+        {
+            ResolveFunction = resolveFunction ?? throw new ArgumentNullException(nameof(resolveFunction));
+            CacheLifetime = cacheLifetime ?? Timeout.InfiniteTimeSpan;
+        }
 
-		// Purge should happen slightly after lifetime, to allow eventual refresh if the property is still used
-		private TimeSpan PurgeLifetime => CacheLifetime + TimeSpan.FromMinutes(5);
+        public void Dispose()
+        {
+            // Those are objects that are always being created if constructor doesn't throw exception
+            InitSemaphore.Dispose();
 
-		public void Dispose() {
-			// Those are objects that are always being created if constructor doesn't throw exception
-			InitSemaphore.Dispose();
+            // Those are objects that might be null and the check should be in-place
+            MaintenanceTimer?.Dispose();
+        }
 
-			// Those are objects that might be null and the check should be in-place
-			MaintenanceTimer?.Dispose();
-		}
+        [PublicAPI]
+        public async Task<(bool Success, T Result)> GetValue(EFallback fallback = EFallback.DefaultForType)
+        {
+            if (!Enum.IsDefined(typeof(EFallback), fallback))
+            {
+                sc.Logger.LogNullError(nameof(fallback));
 
-		[PublicAPI]
-		public async Task<(bool Success, T Result)> GetValue(EFallback fallback = EFallback.DefaultForType) {
-			if (!Enum.IsDefined(typeof(EFallback), fallback)) {
-				Logger.LogNullError(nameof(fallback));
+                return (false, default);
+            }
 
-				return (false, default);
-			}
+            if (IsInitialized && IsRecent) return (true, InitializedValue);
 
-			if (IsInitialized && IsRecent) {
-				return (true, InitializedValue);
-			}
+            await InitSemaphore.WaitAsync().ConfigureAwait(false);
 
-			await InitSemaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                if (IsInitialized && IsRecent) return (true, InitializedValue);
 
-			try {
-				if (IsInitialized && IsRecent) {
-					return (true, InitializedValue);
-				}
+                var (success, result) = await ResolveFunction().ConfigureAwait(false);
 
-				(bool success, T result) = await ResolveFunction().ConfigureAwait(false);
+                if (!success)
+                    switch (fallback)
+                    {
+                        case EFallback.DefaultForType:
+                            return (false, default);
+                        case EFallback.FailedNow:
+                            return (false, result);
+                        case EFallback.SuccessPreviously:
+                            return (false, InitializedValue);
+                        default:
+                            sc.Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport,
+                                nameof(fallback), fallback));
 
-				if (!success) {
-					switch (fallback) {
-						case EFallback.DefaultForType:
-							return (false, default);
-						case EFallback.FailedNow:
-							return (false, result);
-						case EFallback.SuccessPreviously:
-							return (false, InitializedValue);
-						default:
-							Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(fallback), fallback));
+                            goto case EFallback.DefaultForType;
+                    }
 
-							goto case EFallback.DefaultForType;
-					}
-				}
+                InitializedValue = result;
+                InitializedAt = DateTime.UtcNow;
 
-				InitializedValue = result;
-				InitializedAt = DateTime.UtcNow;
+                if (!IsPermanentCache)
+                {
+                    if (MaintenanceTimer == null)
+                        MaintenanceTimer = new Timer(
+                            async e => await SoftReset().ConfigureAwait(false),
+                            null,
+                            PurgeLifetime, // Delay
+                            Timeout.InfiniteTimeSpan // Period
+                        );
+                    else
+                        MaintenanceTimer.Change(PurgeLifetime, Timeout.InfiniteTimeSpan);
+                }
 
-				if (!IsPermanentCache) {
-					if (MaintenanceTimer == null) {
-						MaintenanceTimer = new Timer(
-							async e => await SoftReset().ConfigureAwait(false),
-							null,
-							PurgeLifetime, // Delay
-							Timeout.InfiniteTimeSpan // Period
-						);
-					} else {
-						MaintenanceTimer.Change(PurgeLifetime, Timeout.InfiniteTimeSpan);
-					}
-				}
+                return (true, result);
+            }
+            finally
+            {
+                InitSemaphore.Release();
+            }
+        }
 
-				return (true, result);
-			} finally {
-				InitSemaphore.Release();
-			}
-		}
+        [PublicAPI]
+        public async Task Reset()
+        {
+            if (!IsInitialized) return;
 
-		private void HardReset(bool withValue = true) {
-			InitializedAt = DateTime.MinValue;
+            await InitSemaphore.WaitAsync().ConfigureAwait(false);
 
-			if (withValue) {
-				InitializedValue = default;
-			}
+            try
+            {
+                if (!IsInitialized) return;
 
-			if (MaintenanceTimer != null) {
-				MaintenanceTimer.Dispose();
-				MaintenanceTimer = null;
-			}
-		}
+                HardReset();
+            }
+            finally
+            {
+                InitSemaphore.Release();
+            }
+        }
 
-		[PublicAPI]
-		public async Task Reset() {
-			if (!IsInitialized) {
-				return;
-			}
+        private void HardReset(bool withValue = true)
+        {
+            InitializedAt = DateTime.MinValue;
 
-			await InitSemaphore.WaitAsync().ConfigureAwait(false);
+            if (withValue) InitializedValue = default;
 
-			try {
-				if (!IsInitialized) {
-					return;
-				}
+            if (MaintenanceTimer != null)
+            {
+                MaintenanceTimer.Dispose();
+                MaintenanceTimer = null;
+            }
+        }
 
-				HardReset();
-			} finally {
-				InitSemaphore.Release();
-			}
-		}
+        private async Task SoftReset()
+        {
+            if (!IsInitialized || IsRecent) return;
 
-		private async Task SoftReset() {
-			if (!IsInitialized || IsRecent) {
-				return;
-			}
+            await InitSemaphore.WaitAsync().ConfigureAwait(false);
 
-			await InitSemaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                if (!IsInitialized || IsRecent) return;
 
-			try {
-				if (!IsInitialized || IsRecent) {
-					return;
-				}
+                HardReset(false);
+            }
+            finally
+            {
+                InitSemaphore.Release();
+            }
+        }
 
-				HardReset(false);
-			} finally {
-				InitSemaphore.Release();
-			}
-		}
-	}
+        public enum EFallback : byte
+        {
+            DefaultForType,
+            FailedNow,
+            SuccessPreviously
+        }
+    }
 }

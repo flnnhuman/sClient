@@ -1,28 +1,33 @@
 ﻿using SteamKit2;
 
-namespace sc {
-	internal class Debugging {
-	#if DEBUG
-		internal static bool IsDebugBuild => true;
-	#else
+namespace sc
+{
+    internal class Debugging
+    {
+#if DEBUG
+        internal static bool IsDebugBuild => true;
+#else
 		 internal static bool IsDebugBuild => false;
-	#endif
+#endif
 
-		private static Logger _logger;
-		internal static bool IsDebugConfigured => GlobalConfig.Debug;
 
-		internal static bool IsUserDebugging => IsDebugBuild || IsDebugConfigured;
+        internal static bool IsDebugConfigured => GlobalConfig.Debug;
 
-		internal sealed class DebugListener : IDebugListener {
-			public void WriteLine(string category, string msg) {
-				if (string.IsNullOrEmpty(category) && string.IsNullOrEmpty(msg)) {
-					_logger.LogNullError(nameof(category) + " && " + nameof(msg));
+        internal static bool IsUserDebugging => IsDebugBuild || IsDebugConfigured;
 
-					return;
-				}
+        internal sealed class DebugListener : IDebugListener
+        {
+            public void WriteLine(string category, string msg)
+            {
+                if (string.IsNullOrEmpty(category) && string.IsNullOrEmpty(msg))
+                {
+                    sc.Logger.LogNullError(nameof(category) + " && " + nameof(msg));
 
-				_logger.LogGenericDebug(category + " | " + msg);
-			}
-		}
-	}
+                    return;
+                }
+
+                sc.Logger.LogGenericDebug(category + " | " + msg);
+            }
+        }
+    }
 }

@@ -32,6 +32,7 @@
             </e>
           </e>
         </e>
+        <e p="sc.cs" t="Include" />
         <e p="sc.csproj" t="IncludeRecursive" />
         <e p="SCHandler.cs" t="Include" />
         <e p="second page.xaml" t="Include" />

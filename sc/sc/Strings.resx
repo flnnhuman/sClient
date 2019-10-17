@@ -128,6 +128,16 @@
 {0}</value>
         <comment>{0} will be replaced by content string. Please note that this string should include newline for formatting.</comment>
   </data>
+    <data name="BotInstanceNotStartingBecauseDisabled" xml:space="preserve">
+    <value>Not starting this bot instance because it's disabled in config file!</value>
+  </data>
+    <data name="Starting" xml:space="preserve">
+    <value>Starting...</value>
+  </data>
+    <data name="WarningFailedWithError" xml:space="preserve">
+    <value>Failed due to error: {0}</value>
+        <comment>{0} will be replaced by failure reason (string)</comment>
+  </data>
 
 
 </root>

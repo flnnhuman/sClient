@@ -1,89 +1,109 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 
-namespace sc {
-	public sealed class Logger {
-		public void LogGenericDebug(string message, [CallerMemberName] string previousMethodName = null) {
-			if (string.IsNullOrEmpty(message)) {
-				LogNullError(nameof(message));
+namespace sc
+{
+    public sealed class Logger
+    {
+        public Logger([NotNull] string name)
+        {
+            if (string.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
+        }
 
-				return;
-			}
+        public void LogGenericError(string message, [CallerMemberName] string previousMethodName = null)
+        {
+            if (string.IsNullOrEmpty(message))
+            {
+                LogNullError(nameof(message));
 
-			Debug.Print($"{previousMethodName}() {message}");
-		}
+                return;
+            }
 
-		public void LogGenericDebuggingException(Exception exception, [CallerMemberName] string previousMethodName = null) {
-			if (exception == null) {
-				LogNullError(nameof(exception));
+            Debug.Fail($"{previousMethodName}() {message}" + "\r\n");
+        }
 
-				return;
-			}
+        public void LogNullError(string nullObjectName, [CallerMemberName] string previousMethodName = null)
+        {
+            if (string.IsNullOrEmpty(nullObjectName)) return;
 
-			if (!Debugging.IsUserDebugging) {
-				return;
-			}
+            LogGenericError(string.Format(Strings.ErrorObjectIsNull, nullObjectName), previousMethodName);
+        }
 
-			Debug.Print(exception.Message, $"{previousMethodName}()");
-		}
+        public void LogGenericInfo(string message, [CallerMemberName] string previousMethodName = null)
+        {
+            if (string.IsNullOrEmpty(message))
+            {
+                LogNullError(nameof(message));
 
-		public void LogGenericError(string message, [CallerMemberName] string previousMethodName = null) {
-			if (string.IsNullOrEmpty(message)) {
-				LogNullError(nameof(message));
+                return;
+            }
 
-				return;
-			}
+            Debug.Write($"{previousMethodName}() {message}" + "\r\n");
+        }
 
-			Debug.Fail($"{previousMethodName}() {message}");
-		}
+        public void LogGenericException(Exception exception, [CallerMemberName] string previousMethodName = null)
+        {
+            if (exception == null)
+            {
+                LogNullError(nameof(exception));
 
-		public void LogGenericException(Exception exception, [CallerMemberName] string previousMethodName = null) {
-			if (exception == null) {
-				LogNullError(nameof(exception));
+                return;
+            }
 
-				return;
-			}
+            Debug.Fail(exception.Message, $"{previousMethodName}()" + "\r\n");
+        }
 
-			Debug.Fail(exception.Message, $"{previousMethodName}()");
-		}
+        public void LogGenericWarning(string message, [CallerMemberName] string previousMethodName = null)
+        {
+            if (string.IsNullOrEmpty(message))
+            {
+                LogNullError(nameof(message));
 
-		public void LogGenericInfo(string message, [CallerMemberName] string previousMethodName = null) {
-			if (string.IsNullOrEmpty(message)) {
-				LogNullError(nameof(message));
+                return;
+            }
 
-				return;
-			}
+            Debug.WriteLine($"{previousMethodName}() {message}" + "\r\n");
+        }
 
-			Debug.Write($"{previousMethodName}() {message}");
-		}
+        public void LogGenericDebuggingException(Exception exception,
+            [CallerMemberName] string previousMethodName = null)
+        {
+            if (exception == null)
+            {
+                LogNullError(nameof(exception));
 
-		public void LogGenericWarning(string message, [CallerMemberName] string previousMethodName = null) {
-			if (string.IsNullOrEmpty(message)) {
-				LogNullError(nameof(message));
+                return;
+            }
 
-				return;
-			}
+            if (!Debugging.IsUserDebugging) return;
 
-			Debug.WriteLine($"{previousMethodName}() {message}");
-		}
+            Debug.Print(exception.Message, $"{previousMethodName}()" + "\r\n");
+        }
 
-		public void LogGenericWarningException(Exception exception, [CallerMemberName] string previousMethodName = null) {
-			if (exception == null) {
-				LogNullError(nameof(exception));
+        public void LogGenericDebug(string message, [CallerMemberName] string previousMethodName = null)
+        {
+            if (string.IsNullOrEmpty(message))
+            {
+                LogNullError(nameof(message));
 
-				return;
-			}
+                return;
+            }
 
-			Debug.Print(exception.Message, $"{previousMethodName}()");
-		}
+            Debug.Print($"{previousMethodName}() {message}" + "\r\n");
+        }
 
-		public void LogNullError(string nullObjectName, [CallerMemberName] string previousMethodName = null) {
-			if (string.IsNullOrEmpty(nullObjectName)) {
-				return;
-			}
+        public void LogGenericWarningException(Exception exception, [CallerMemberName] string previousMethodName = null)
+        {
+            if (exception == null)
+            {
+                LogNullError(nameof(exception));
 
-			LogGenericError(string.Format(Strings.ErrorObjectIsNull, nullObjectName), previousMethodName);
-		}
-	}
+                return;
+            }
+
+            Debug.Print(exception.Message, $"{previousMethodName}()" + "\r\n");
+        }
+    }
 }

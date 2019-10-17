@@ -4,85 +4,92 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace sc {
-	// TODO: заменить на sqlite мб
-	public abstract class SerializableFile : IDisposable {
-		private readonly SemaphoreSlim FileSemaphore = new SemaphoreSlim(1, 1);
 
-		private Logger _logger;
+namespace sc
+{
+    public abstract class SerializableFile : IDisposable
+    {
+        private readonly SemaphoreSlim FileSemaphore = new SemaphoreSlim(1, 1);
 
-		private bool ReadOnly;
-		private bool SavingScheduled;
+        protected string FilePath { private get; set; }
 
-		protected string FilePath { private get; set; }
+        private bool ReadOnly;
+        private bool SavingScheduled;
 
-		public virtual void Dispose() => FileSemaphore.Dispose();
 
-		internal async Task MakeReadOnly() {
-			if (ReadOnly) {
-				return;
-			}
+        public virtual void Dispose()
+        {
+            FileSemaphore.Dispose();
+        }
 
-			await FileSemaphore.WaitAsync().ConfigureAwait(false);
+        public async Task Save()
+        {
+            if (ReadOnly || string.IsNullOrEmpty(FilePath)) return;
 
-			try {
-				if (ReadOnly) {
-					return;
-				}
+            lock (FileSemaphore)
+            {
+                if (SavingScheduled) return;
 
-				ReadOnly = true;
-			} finally {
-				FileSemaphore.Release();
-			}
-		}
+                SavingScheduled = true;
+            }
 
-		public async Task Save() {
-			if (ReadOnly || string.IsNullOrEmpty(FilePath)) {
-				return;
-			}
+            await FileSemaphore.WaitAsync().ConfigureAwait(false);
 
-			lock (FileSemaphore) {
-				if (SavingScheduled) {
-					return;
-				}
+            try
+            {
+                lock (FileSemaphore)
+                {
+                    SavingScheduled = false;
+                }
 
-				SavingScheduled = true;
-			}
+                if (ReadOnly) return;
 
-			await FileSemaphore.WaitAsync().ConfigureAwait(false);
+                var json = JsonConvert.SerializeObject(this, /*Debugging.IsUserDebugging ?*/
+                    Formatting.Indented /*: Formatting.None*/);
 
-			try {
-				lock (FileSemaphore) {
-					SavingScheduled = false;
-				}
+                if (string.IsNullOrEmpty(json))
+                {
+                    sc.Logger.LogNullError(nameof(json));
 
-				if (ReadOnly) {
-					return;
-				}
+                    return;
+                }
 
-				string json = JsonConvert.SerializeObject(this, /*Debugging.IsUserDebugging ?*/ Formatting.Indented /*: Formatting.None*/);
+                var newFilePath = FilePath + ".new";
 
-				if (string.IsNullOrEmpty(json)) {
-					_logger.LogNullError(nameof(json));
+                // We always want to write entire content to temporary file first, in order to never load corrupted data, also when target file doesn't exist
+                File.WriteAllText(newFilePath, json);
 
-					return;
-				}
+                if (File.Exists(FilePath))
+                    File.Replace(newFilePath, FilePath, null);
+                else
+                    File.Move(newFilePath, FilePath);
+            }
+            catch (Exception e)
+            {
+                sc.Logger.LogGenericException(e);
+            }
+            finally
+            {
+                FileSemaphore.Release();
+            }
+        }
 
-				string newFilePath = FilePath + ".new";
+        internal async Task MakeReadOnly()
+        {
+            if (ReadOnly) return;
 
-				// We always want to write entire content to temporary file first, in order to never load corrupted data, also when target file doesn't exist
-				File.WriteAllText(newFilePath, json);
+            await FileSemaphore.WaitAsync().ConfigureAwait(false);
 
-				if (File.Exists(FilePath)) {
-					File.Replace(newFilePath, FilePath, null);
-				} else {
-					File.Move(newFilePath, FilePath);
-				}
-			} catch (Exception e) {
-				_logger.LogGenericException(e);
-			} finally {
-				FileSemaphore.Release();
-			}
-		}
-	}
+            try
+            {
+                if (ReadOnly) return;
+
+                ReadOnly = true;
+            }
+            finally
+            {
+                FileSemaphore.Release();
+            }
+        }
+    }
 }

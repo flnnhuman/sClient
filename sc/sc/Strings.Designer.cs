@@ -133,6 +133,15 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Not starting this bot instance because it&apos;s disabled in config file!.
+        /// </summary>
+        public static string BotInstanceNotStartingBecauseDisabled {
+            get {
+                return ResourceManager.GetString("BotInstanceNotStartingBecauseDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Successfully logged on as {0}..
         /// </summary>
         public static string BotLoggedOn {
@@ -242,6 +251,15 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Starting....
+        /// </summary>
+        public static string Starting {
+            get {
+                return ResourceManager.GetString("Starting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Success!.
         /// </summary>
         public static string Success {
@@ -319,6 +337,15 @@ namespace sc {
         public static string WarningFailed {
             get {
                 return ResourceManager.GetString("WarningFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed due to error: {0}.
+        /// </summary>
+        public static string WarningFailedWithError {
+            get {
+                return ResourceManager.GetString("WarningFailedWithError", resourceCulture);
             }
         }
         

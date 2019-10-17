@@ -1,34 +1,45 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 using SteamKit2;
 
-namespace sc {
-	public class BotConfig {
-		private const EPersonaState DefaultOnlineStatus = EPersonaState.Online;
-		private const bool DefaultUseLoginKeys = true;
-		private const string DefaultSteamLogin = null;
-		private const string DefaultSteamPassword = null;
-		private const string DefaultSteamParentalCode = null;
-		internal const byte SteamParentalCodeLength = 4;
+namespace sc
+{
+    public class BotConfig
+    {
+        private const EPersonaState DefaultOnlineStatus = EPersonaState.Online;
+        private const bool DefaultUseLoginKeys = true;
+        public readonly bool UseLoginKeys = DefaultUseLoginKeys;
+        private const string DefaultSteamLogin = "randomflbnacr";
+        private const string DefaultSteamPassword = "Fdk&!!k184";
 
-		[JsonProperty(Required = Required.DisallowNull)]
-		public readonly EPersonaState OnlineStatus = DefaultOnlineStatus;
+        public string SteamLogin = DefaultSteamLogin;
+        public string SteamPassword = DefaultSteamPassword;
 
-		public readonly bool UseLoginKeys = DefaultUseLoginKeys;
-		private string BackingSteamParentalCode = DefaultSteamParentalCode;
+        public string DecryptedSteamPassword = "";
 
-		public string DecryptedSteamPassword = "";
+        [JsonProperty(Required = Required.DisallowNull)]
+        public readonly EPersonaState OnlineStatus = DefaultOnlineStatus;
 
-		public string SteamLogin = DefaultSteamLogin;
-		public string SteamPassword = DefaultSteamPassword;
-		internal bool IsSteamParentalCodeSet { get; private set; }
+        private const string DefaultSteamParentalCode = null;
+        internal const byte SteamParentalCodeLength = 4;
+        internal bool IsSteamParentalCodeSet { get; private set; }
 
-		internal string SteamParentalCode {
-			get => BackingSteamParentalCode;
+        internal string SteamParentalCode
+        {
+            get => BackingSteamParentalCode;
 
-			set {
-				IsSteamParentalCodeSet = true;
-				BackingSteamParentalCode = value;
-			}
-		}
-	}
+            set
+            {
+                IsSteamParentalCodeSet = true;
+                BackingSteamParentalCode = value;
+            }
+        }
+
+        private string BackingSteamParentalCode = DefaultSteamParentalCode;
+
+        [JsonProperty(Required = Required.DisallowNull)]
+        public readonly bool Enabled = DefaultEnabled;
+
+        private const bool DefaultEnabled = true;
+    }
 }
