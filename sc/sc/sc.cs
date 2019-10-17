@@ -1,60 +1,54 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
+﻿using System.IO;
 
-namespace sc
-{
-    public class sc
-    {
-        public static readonly Logger Logger = new Logger(nameof(sc));
+namespace sc {
+	public class sc {
+		public static readonly Logger Logger = new Logger(nameof(sc));
 
-        public static GlobalConfig GlobalConfig { get; private set; }
-        public static GlobalDatabase GlobalDatabase { get; private set; }
-        public static WebBrowser WebBrowser { get; internal set; }
-        
-        internal static void InitializeGlobalConfigAndDatabase() {
-            InitGlobalConfig(GlobalConfig.CreateOrLoad(Path.Combine(MainPage.MainDir, "config.json")));
-            InitGlobalDatabase(GlobalDatabase.CreateOrLoad(Path.Combine(MainPage.MainDir, "db.json")));
-        }
-        
-        internal static void InitGlobalConfig(GlobalConfig globalConfig)
-        {
-            if (globalConfig == null)
-            {
-                Logger.LogNullError(nameof(globalConfig));
+		public static GlobalConfig GlobalConfig { get; private set; }
+		public static GlobalDatabase GlobalDatabase { get; private set; }
+		public static WebBrowser WebBrowser { get; internal set; }
 
-                return;
-            }
+		internal static void InitGlobalConfig(GlobalConfig globalConfig) {
+			if (globalConfig == null) {
+				Logger.LogNullError(nameof(globalConfig));
 
-            if (GlobalConfig != null) return;
+				return;
+			}
 
-            GlobalConfig = globalConfig;
-        }
+			if (GlobalConfig != null) {
+				return;
+			}
 
-        internal static void InitGlobalDatabase(GlobalDatabase globalDatabase)
-        {
-            if (globalDatabase == null)
-            {
-                Logger.LogNullError(nameof(globalDatabase));
+			GlobalConfig = globalConfig;
+		}
 
-                return;
-            }
+		internal static void InitGlobalDatabase(GlobalDatabase globalDatabase) {
+			if (globalDatabase == null) {
+				Logger.LogNullError(nameof(globalDatabase));
 
-            if (GlobalDatabase != null) return;
+				return;
+			}
 
-            GlobalDatabase = globalDatabase;
-        }
+			if (GlobalDatabase != null) {
+				return;
+			}
 
-        internal enum EUserInputType : byte
-        {
-            Unknown,
-            DeviceID,
-            Login,
-            Password,
-            SteamGuard,
-            SteamParentalCode,
-            TwoFactorAuthentication
-        }
-    }
+			GlobalDatabase = globalDatabase;
+		}
+
+		internal static void InitializeGlobalConfigAndDatabase() {
+			InitGlobalConfig(GlobalConfig.CreateOrLoad(Path.Combine(MainPage.MainDir, "config.json")));
+			InitGlobalDatabase(GlobalDatabase.CreateOrLoad(Path.Combine(MainPage.MainDir, "db.json")));
+		}
+
+		internal enum EUserInputType : byte {
+			Unknown,
+			DeviceID,
+			Login,
+			Password,
+			SteamGuard,
+			SteamParentalCode,
+			TwoFactorAuthentication
+		}
+	}
 }

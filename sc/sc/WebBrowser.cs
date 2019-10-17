@@ -5,215 +5,200 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 
-namespace sc
-{
-    public sealed class WebBrowser : IDisposable
-    {
-        private readonly Logger Logger;
-        private readonly HttpClient HttpClient;
-        private readonly HttpClientHandler HttpClientHandler;
-        public TimeSpan Timeout => HttpClient.Timeout;
-        public const byte MaxTries = 5;
-        internal const byte MaxConnections = 5;
+namespace sc {
+	public sealed class WebBrowser : IDisposable {
+		public enum ERequestOptions : byte {
+			None = 0,
+			ReturnClientErrors = 1
+		}
 
-        internal readonly CookieContainer CookieContainer = new CookieContainer();
+		public const byte MaxTries = 5;
+		internal const byte MaxConnections = 5;
 
-        public void Dispose()
-        {
-            HttpClient.Dispose();
-            HttpClientHandler.Dispose();
-        }
+		internal readonly CookieContainer CookieContainer = new CookieContainer();
+		private readonly HttpClient HttpClient;
+		private readonly HttpClientHandler HttpClientHandler;
+		private readonly Logger Logger;
+		public TimeSpan Timeout => HttpClient.Timeout;
 
-        public class BasicResponse
-        {
-            [PublicAPI] public readonly HttpStatusCode StatusCode;
+		public void Dispose() {
+			HttpClient.Dispose();
+			HttpClientHandler.Dispose();
+		}
 
-            internal readonly Uri FinalUri;
+		private async Task<HttpResponseMessage> InternalPost(string request, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null) {
+			if (string.IsNullOrEmpty(request)) {
+				Logger.LogNullError(nameof(request));
 
-            internal BasicResponse([NotNull] HttpResponseMessage httpResponseMessage)
-            {
-                if (httpResponseMessage == null) throw new ArgumentNullException(nameof(httpResponseMessage));
+				return null;
+			}
 
-                FinalUri = httpResponseMessage.Headers.Location ?? httpResponseMessage.RequestMessage.RequestUri;
-                StatusCode = httpResponseMessage.StatusCode;
-            }
+			return await InternalRequest(new Uri(request), HttpMethod.Post, data, referer).ConfigureAwait(false);
+		}
 
-            internal BasicResponse([NotNull] BasicResponse basicResponse)
-            {
-                if (basicResponse == null) throw new ArgumentNullException(nameof(basicResponse));
+		private async Task<HttpResponseMessage> InternalRequest(Uri requestUri, HttpMethod httpMethod, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null, HttpCompletionOption httpCompletionOption = HttpCompletionOption.ResponseContentRead, byte maxRedirections = MaxTries) {
+			if ((requestUri == null) || (httpMethod == null)) {
+				Logger.LogNullError(nameof(requestUri) + " || " + nameof(httpMethod));
 
-                FinalUri = basicResponse.FinalUri;
-                StatusCode = basicResponse.StatusCode;
-            }
-        }
+				return null;
+			}
 
-        public async Task<BasicResponse> UrlPost(string request,
-            IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null,
-            ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries)
-        {
-            if (string.IsNullOrEmpty(request) || maxTries == 0)
-            {
-                Logger.LogNullError(nameof(request) + " || " + nameof(maxTries));
+			HttpResponseMessage response;
 
-                return null;
-            }
+			using (HttpRequestMessage request = new HttpRequestMessage(httpMethod, requestUri)) {
+				if (data != null) {
+					try {
+						request.Content = new FormUrlEncodedContent(data);
+					} catch (UriFormatException e) {
+						Logger.LogGenericException(e);
 
-            BasicResponse result = null;
+						return null;
+					}
+				}
 
-            for (byte i = 0; i < maxTries; i++)
-            {
-                var response = await InternalPost(request, data, referer).ConfigureAwait(false);
+				if (!string.IsNullOrEmpty(referer)) {
+					request.Headers.Referrer = new Uri(referer);
+				}
 
-                if (response == null) continue;
+				if (Debugging.IsUserDebugging) {
+					Logger.LogGenericDebug(httpMethod + " " + requestUri);
+				}
 
-                if (response.StatusCode.IsClientErrorCode())
-                {
-                    if (requestOptions.HasFlag(ERequestOptions.ReturnClientErrors))
-                        result = new BasicResponse(response);
+				try {
+					response = await HttpClient.SendAsync(request, httpCompletionOption).ConfigureAwait(false);
+				} catch (Exception e) {
+					Logger.LogGenericDebuggingException(e);
 
-                    break;
-                }
+					return null;
+				}
+			}
 
-                return new BasicResponse(response);
-            }
+			if (response == null) {
+				if (Debugging.IsUserDebugging) {
+					Logger.LogGenericDebug("null <- " + httpMethod + " " + requestUri);
+				}
 
-            if (maxTries > 1)
-            {
-                Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, maxTries));
-                Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, request));
-            }
+				return null;
+			}
 
-            return result;
-        }
+			if (Debugging.IsUserDebugging) {
+				Logger.LogGenericDebug(response.StatusCode + " <- " + httpMethod + " " + requestUri);
+			}
 
-        private async Task<HttpResponseMessage> InternalPost(string request,
-            IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null)
-        {
-            if (string.IsNullOrEmpty(request))
-            {
-                Logger.LogNullError(nameof(request));
+			if (response.IsSuccessStatusCode) {
+				return response;
+			}
 
-                return null;
-            }
+			// WARNING: We still have not disposed response by now, make sure to dispose it ASAP if we're not returning it!
+			if ((response.StatusCode >= HttpStatusCode.Ambiguous) && (response.StatusCode < HttpStatusCode.BadRequest) && (maxRedirections > 0)) {
+				Uri redirectUri = response.Headers.Location;
 
-            return await InternalRequest(new Uri(request), HttpMethod.Post, data, referer).ConfigureAwait(false);
-        }
+				if (redirectUri.IsAbsoluteUri) {
+					switch (redirectUri.Scheme) {
+						case "http":
+						case "https":
+							break;
+						case "steammobile":
+							// Those redirections are invalid, but we're aware of that and we have extra logic for them
+							return response;
+						default:
+							// We have no clue about those, but maybe HttpClient can handle them for us
+							Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(redirectUri.Scheme), redirectUri.Scheme));
 
-        public enum ERequestOptions : byte
-        {
-            None = 0,
-            ReturnClientErrors = 1
-        }
+							break;
+					}
+				} else {
+					redirectUri = new Uri(requestUri, redirectUri);
+				}
 
-        private async Task<HttpResponseMessage> InternalRequest(Uri requestUri, HttpMethod httpMethod,
-            IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null,
-            HttpCompletionOption httpCompletionOption = HttpCompletionOption.ResponseContentRead,
-            byte maxRedirections = MaxTries)
-        {
-            if (requestUri == null || httpMethod == null)
-            {
-                Logger.LogNullError(nameof(requestUri) + " || " + nameof(httpMethod));
+				response.Dispose();
 
-                return null;
-            }
+				// Per https://tools.ietf.org/html/rfc7231#section-7.1.2, a redirect location without a fragment should inherit the fragment from the original URI
+				if (!string.IsNullOrEmpty(requestUri.Fragment) && string.IsNullOrEmpty(redirectUri.Fragment)) {
+					redirectUri = new UriBuilder(redirectUri) {
+						Fragment = requestUri.Fragment
+					}.Uri;
+				}
 
-            HttpResponseMessage response;
+				return await InternalRequest(redirectUri, httpMethod, data, referer, httpCompletionOption, --maxRedirections).ConfigureAwait(false);
+			}
 
-            using (var request = new HttpRequestMessage(httpMethod, requestUri))
-            {
-                if (data != null)
-                    try
-                    {
-                        request.Content = new FormUrlEncodedContent(data);
-                    }
-                    catch (UriFormatException e)
-                    {
-                        Logger.LogGenericException(e);
+			if (response.StatusCode.IsClientErrorCode()) {
+				if (Debugging.IsUserDebugging) {
+					Logger.LogGenericDebug(string.Format(Strings.Content, await response.Content.ReadAsStringAsync().ConfigureAwait(false)));
+				}
 
-                        return null;
-                    }
+				// Do not retry on client errors
+				return response;
+			}
 
-                if (!string.IsNullOrEmpty(referer)) request.Headers.Referrer = new Uri(referer);
+			using (response) {
+				if (Debugging.IsUserDebugging) {
+					Logger.LogGenericDebug(string.Format(Strings.Content, await response.Content.ReadAsStringAsync().ConfigureAwait(false)));
+				}
 
-                if (Debugging.IsUserDebugging) Logger.LogGenericDebug(httpMethod + " " + requestUri);
+				return null;
+			}
+		}
 
-                try
-                {
-                    response = await HttpClient.SendAsync(request, httpCompletionOption).ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    Logger.LogGenericDebuggingException(e);
+		public async Task<BasicResponse> UrlPost(string request, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null, ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries) {
+			if (string.IsNullOrEmpty(request) || (maxTries == 0)) {
+				Logger.LogNullError(nameof(request) + " || " + nameof(maxTries));
 
-                    return null;
-                }
-            }
+				return null;
+			}
 
-            if (response == null)
-            {
-                if (Debugging.IsUserDebugging) Logger.LogGenericDebug("null <- " + httpMethod + " " + requestUri);
+			BasicResponse result = null;
 
-                return null;
-            }
+			for (byte i = 0; i < maxTries; i++) {
+				HttpResponseMessage response = await InternalPost(request, data, referer).ConfigureAwait(false);
 
-            if (Debugging.IsUserDebugging)
-                Logger.LogGenericDebug(response.StatusCode + " <- " + httpMethod + " " + requestUri);
+				if (response == null) {
+					continue;
+				}
 
-            if (response.IsSuccessStatusCode) return response;
+				if (response.StatusCode.IsClientErrorCode()) {
+					if (requestOptions.HasFlag(ERequestOptions.ReturnClientErrors)) {
+						result = new BasicResponse(response);
+					}
 
-            // WARNING: We still have not disposed response by now, make sure to dispose it ASAP if we're not returning it!
-            if (response.StatusCode >= HttpStatusCode.Ambiguous && response.StatusCode < HttpStatusCode.BadRequest &&
-                maxRedirections > 0)
-            {
-                var redirectUri = response.Headers.Location;
+					break;
+				}
 
-                if (redirectUri.IsAbsoluteUri)
-                    switch (redirectUri.Scheme)
-                    {
-                        case "http":
-                        case "https":
-                            break;
-                        case "steammobile":
-                            // Those redirections are invalid, but we're aware of that and we have extra logic for them
-                            return response;
-                        default:
-                            // We have no clue about those, but maybe HttpClient can handle them for us
-                            Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport,
-                                nameof(redirectUri.Scheme), redirectUri.Scheme));
+				return new BasicResponse(response);
+			}
 
-                            break;
-                    }
-                else
-                    redirectUri = new Uri(requestUri, redirectUri);
+			if (maxTries > 1) {
+				Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, maxTries));
+				Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, request));
+			}
 
-                response.Dispose();
+			return result;
+		}
 
-                // Per https://tools.ietf.org/html/rfc7231#section-7.1.2, a redirect location without a fragment should inherit the fragment from the original URI
-                if (!string.IsNullOrEmpty(requestUri.Fragment) && string.IsNullOrEmpty(redirectUri.Fragment))
-                    redirectUri = new UriBuilder(redirectUri) {Fragment = requestUri.Fragment}.Uri;
+		public class BasicResponse {
+			internal readonly Uri FinalUri;
 
-                return await InternalRequest(redirectUri, httpMethod, data, referer, httpCompletionOption,
-                    --maxRedirections).ConfigureAwait(false);
-            }
+			[PublicAPI]
+			public readonly HttpStatusCode StatusCode;
 
-            if (response.StatusCode.IsClientErrorCode())
-            {
-                if (Debugging.IsUserDebugging)
-                    Logger.LogGenericDebug(string.Format(Strings.Content,
-                        await response.Content.ReadAsStringAsync().ConfigureAwait(false)));
+			internal BasicResponse([NotNull] HttpResponseMessage httpResponseMessage) {
+				if (httpResponseMessage == null) {
+					throw new ArgumentNullException(nameof(httpResponseMessage));
+				}
 
-                // Do not retry on client errors
-                return response;
-            }
+				FinalUri = httpResponseMessage.Headers.Location ?? httpResponseMessage.RequestMessage.RequestUri;
+				StatusCode = httpResponseMessage.StatusCode;
+			}
 
-            using (response)
-            {
-                if (Debugging.IsUserDebugging)
-                    Logger.LogGenericDebug(string.Format(Strings.Content,
-                        await response.Content.ReadAsStringAsync().ConfigureAwait(false)));
+			internal BasicResponse([NotNull] BasicResponse basicResponse) {
+				if (basicResponse == null) {
+					throw new ArgumentNullException(nameof(basicResponse));
+				}
 
-                return null;
-            }
-        }
-    }
+				FinalUri = basicResponse.FinalUri;
+				StatusCode = basicResponse.StatusCode;
+			}
+		}
+	}
 }

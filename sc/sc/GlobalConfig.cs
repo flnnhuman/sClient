@@ -1,77 +1,74 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace sc
-{
-    public class GlobalConfig
-    {
-        private const bool DefaultDebug = false;
-        public readonly bool Debug = DefaultDebug;
+namespace sc {
+	public class GlobalConfig {
+		private const bool DefaultDebug = false;
 
-        internal const byte DefaultConnectionTimeout = 90;
-        internal const byte DefaultLoginLimiterDelay = 10;
-        private const ushort DefaultWebLimiterDelay = 300;
+		internal const byte DefaultConnectionTimeout = 90;
+		internal const byte DefaultLoginLimiterDelay = 10;
+		private const ushort DefaultWebLimiterDelay = 300;
 
-        [JsonProperty(Required = Required.DisallowNull)]
-        public readonly byte ConnectionTimeout = DefaultConnectionTimeout;
+		[JsonProperty(Required = Required.DisallowNull)]
+		public readonly byte ConnectionTimeout = DefaultConnectionTimeout;
 
-        [JsonProperty(Required = Required.DisallowNull)]
-        public readonly byte LoginLimiterDelay = DefaultLoginLimiterDelay;
+		public readonly bool Debug = DefaultDebug;
 
-        public readonly ushort WebLimiterDelay = DefaultWebLimiterDelay;
-        
-        internal static GlobalConfig CreateOrLoad(string filePath) {
-            if (string.IsNullOrEmpty(filePath)) {
-                sc.Logger.LogNullError(nameof(filePath));
-                return null;
-            }
+		[JsonProperty(Required = Required.DisallowNull)]
+		public readonly byte LoginLimiterDelay = DefaultLoginLimiterDelay;
 
-            GlobalConfig globalConfig;
-            if (!File.Exists(filePath)) {
-                globalConfig = new GlobalConfig();
-                globalConfig.Write(filePath);
-                return globalConfig;
-            }
+		public readonly ushort WebLimiterDelay = DefaultWebLimiterDelay;
 
-            try {
-                string json = File.ReadAllText(filePath);
-                if (string.IsNullOrEmpty(json)) {
-                    sc.Logger.LogGenericError(string.Format(Strings.ErrorObjectIsNull, nameof(json)));
-                    return null;
-                }
+		internal static GlobalConfig CreateOrLoad(string filePath) {
+			if (string.IsNullOrEmpty(filePath)) {
+				sc.Logger.LogNullError(nameof(filePath));
+				return null;
+			}
 
-                globalConfig = JsonConvert.DeserializeObject<GlobalConfig>(json);
-            } catch (Exception e) {
-                sc.Logger.LogGenericWarningException(e);
-                return null;
-            }
+			GlobalConfig globalConfig;
+			if (!File.Exists(filePath)) {
+				globalConfig = new GlobalConfig();
+				globalConfig.Write(filePath);
+				return globalConfig;
+			}
 
-            return globalConfig;
-        }
+			try {
+				string json = File.ReadAllText(filePath);
+				if (string.IsNullOrEmpty(json)) {
+					sc.Logger.LogGenericError(string.Format(Strings.ErrorObjectIsNull, nameof(json)));
+					return null;
+				}
 
-        internal void Write(string filePath) {
-            if (string.IsNullOrEmpty(filePath)) {
-                sc.Logger.LogNullError(nameof(filePath));
-                return;
-            }
+				globalConfig = JsonConvert.DeserializeObject<GlobalConfig>(json);
+			} catch (Exception e) {
+				sc.Logger.LogGenericWarningException(e);
+				return null;
+			}
 
-            string json = JsonConvert.SerializeObject(this, Formatting.Indented);
-            string newFilePath = filePath + ".new";
-            
-            try {
-                File.WriteAllText(newFilePath, json);
+			return globalConfig;
+		}
 
-                if (File.Exists(filePath)) {
-                    File.Replace(newFilePath, filePath, null);
-                } else {
-                    File.Move(newFilePath, filePath);
-                }
-            } catch (Exception e) {
-                sc.Logger.LogGenericWarningException(e);
-            }
-        }
+		internal void Write(string filePath) {
+			if (string.IsNullOrEmpty(filePath)) {
+				sc.Logger.LogNullError(nameof(filePath));
+				return;
+			}
 
-    }
+			string json = JsonConvert.SerializeObject(this, Formatting.Indented);
+			string newFilePath = filePath + ".new";
+
+			try {
+				File.WriteAllText(newFilePath, json);
+
+				if (File.Exists(filePath)) {
+					File.Replace(newFilePath, filePath, null);
+				} else {
+					File.Move(newFilePath, filePath);
+				}
+			} catch (Exception e) {
+				sc.Logger.LogGenericWarningException(e);
+			}
+		}
+	}
 }
