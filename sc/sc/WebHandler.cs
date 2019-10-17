@@ -15,6 +15,7 @@ namespace sc
 {
     public class WebHandler
     {
+        public WebHandler(Bot bot) => Bot = bot ?? throw new ArgumentNullException(nameof(bot));
         public const string SteamCommunityURL = "https://" + SteamCommunityHost;
 
         public static readonly WebBrowser WebBrowser;
@@ -31,12 +32,11 @@ namespace sc
         private const string SteamCommunityHost = "steamcommunity.com";
         private const string SteamHelpHost = "help.steampowered.com";
         private const string SteamStoreHost = "store.steampowered.com";
-        private static Logger Logger;
+        private Logger Logger => Bot.Logger;
         private string VanityURL;
         private DateTime LastSessionCheck;
         private DateTime LastSessionRefresh;
         private bool Initialized;
-        private static GlobalConfig GlobalConfig;
         private readonly Bot Bot;
         public readonly ArchiCacheable<string> CachedApiKey;
 
@@ -247,21 +247,21 @@ namespace sc
         {
             if (string.IsNullOrEmpty(service) || function == null)
             {
-                Logger.LogNullError(nameof(service) + " || " + nameof(function));
+                sc.Logger.LogNullError(nameof(service) + " || " + nameof(function));
 
                 return default;
             }
 
-            if (GlobalConfig.WebLimiterDelay == 0) return await function().ConfigureAwait(false);
+            if (sc.GlobalConfig.WebLimiterDelay == 0) return await function().ConfigureAwait(false);
 
             if (!WebLimitingSemaphores.TryGetValue(service, out var limiters))
             {
-                Logger.LogGenericWarning(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(service),
+                sc.Logger.LogGenericWarning(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(service),
                     service));
 
                 if (!WebLimitingSemaphores.TryGetValue(nameof(WebHandler), out limiters))
                 {
-                    Logger.LogNullError(nameof(limiters));
+                    sc.Logger.LogNullError(nameof(limiters));
 
                     return await function().ConfigureAwait(false);
                 }
@@ -279,7 +279,7 @@ namespace sc
                 Utilities.InBackground(
                     async () =>
                     {
-                        await Task.Delay(GlobalConfig.WebLimiterDelay).ConfigureAwait(false);
+                        await Task.Delay(sc.GlobalConfig.WebLimiterDelay).ConfigureAwait(false);
                         limiters.RateLimitingSemaphore.Release();
                     }
                 );
@@ -375,7 +375,7 @@ namespace sc
         {
             if (waitForInitialization && !Initialized)
             {
-                for (byte i = 0; i < GlobalConfig.ConnectionTimeout && !Initialized && Bot.IsConnectedAndLoggedOn; i++)
+                for (byte i = 0; i < sc.GlobalConfig.ConnectionTimeout && !Initialized && Bot.IsConnectedAndLoggedOn; i++)
                     await Task.Delay(1000).ConfigureAwait(false);
 
                 if (!Initialized)
@@ -393,7 +393,7 @@ namespace sc
         {
             if (uri == null)
             {
-                Logger.LogNullError(nameof(uri));
+                sc.Logger.LogNullError(nameof(uri));
 
                 return false;
             }

@@ -30,12 +30,12 @@ namespace sc
 
         internal DateTime LastPacketReceived { get; private set; }
 
-        internal SCHandler([NotNull] Logger Logger, [NotNull] SteamUnifiedMessages steamUnifiedMessages)
+        internal SCHandler([NotNull] Logger logger, [NotNull] SteamUnifiedMessages steamUnifiedMessages)
         {
-            if (Logger == null || steamUnifiedMessages == null)
-                throw new ArgumentNullException(nameof(Logger) + " || " + nameof(steamUnifiedMessages));
+            if (logger == null || steamUnifiedMessages == null)
+                throw new ArgumentNullException(nameof(logger) + " || " + nameof(steamUnifiedMessages));
 
-            Logger = Logger;
+            Logger = logger;
             UnifiedChatRoomService = steamUnifiedMessages.CreateService<IChatRoom>();
             UnifiedClanChatRoomsService = steamUnifiedMessages.CreateService<IClanChatRooms>();
             UnifiedEconService = steamUnifiedMessages.CreateService<IEcon>();

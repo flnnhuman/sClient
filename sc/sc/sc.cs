@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 
@@ -6,13 +7,17 @@ namespace sc
 {
     public class sc
     {
-        [PublicAPI] public static readonly Logger Logger = new Logger(nameof(sc));
+        public static readonly Logger Logger = new Logger(nameof(sc));
 
-        [PublicAPI] public static GlobalConfig GlobalConfig { get; private set; }
-        [PublicAPI] public static GlobalDatabase GlobalDatabase { get; private set; }
-        [PublicAPI] public static WebBrowser WebBrowser { get; internal set; }
-
-
+        public static GlobalConfig GlobalConfig { get; private set; }
+        public static GlobalDatabase GlobalDatabase { get; private set; }
+        public static WebBrowser WebBrowser { get; internal set; }
+        
+        internal static void InitializeGlobalConfigAndDatabase() {
+            InitGlobalConfig(GlobalConfig.CreateOrLoad(Path.Combine(MainPage.MainDir, "config.json")));
+            InitGlobalDatabase(GlobalDatabase.CreateOrLoad(Path.Combine(MainPage.MainDir, "db.json")));
+        }
+        
         internal static void InitGlobalConfig(GlobalConfig globalConfig)
         {
             if (globalConfig == null)

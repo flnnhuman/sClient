@@ -83,7 +83,8 @@ namespace sc
         private readonly SteamUser SteamUser;
         private uint ItemsCount;
         private uint TradesCount;
-        private bool SteamParentalActive = true;
+        //TODO
+        private bool SteamParentalActive = false;
         private readonly SemaphoreSlim CallbackSemaphore = new SemaphoreSlim(1, 1);
 
 #pragma warning disable IDE0052
@@ -133,7 +134,7 @@ namespace sc
 
             // if (HasMobileAuthenticator) BotDatabase.MobileAuthenticator.Init(this);
 
-            WebHandler = new WebHandler();
+            WebHandler = new WebHandler(this);
 
             SteamConfiguration = SteamConfiguration.Create(builder =>
                     builder.WithProtocolTypes(SteamProtocols).WithCellID(sc.GlobalDatabase.CellID)
@@ -375,13 +376,15 @@ namespace sc
             // Steam login and password fields can contain ASCII characters only, including spaces
             const string nonAsciiPattern = @"[^\u0000-\u007F]+";
 
-            var username = Regex.Replace(BotConfig.SteamLogin, nonAsciiPattern, "",
+            var mainPage = (MainPage) Application.Current.MainPage;
+            var username = Regex.Replace(mainPage.Login, nonAsciiPattern, "",
                 RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-            var password = Regex.Replace(BotConfig.SteamPassword, nonAsciiPattern, "",
+            var password = Regex.Replace(mainPage.Password, nonAsciiPattern, "",
                 RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
             Logger.LogGenericInfo(Strings.BotLoggingIn);
 
+            TwoFactorCode = mainPage.TwoFactorCode;
             //  if (string.IsNullOrEmpty(TwoFactorCode) && HasMobileAuthenticator
             //  ) // We should always include 2FA token, even if it's not required
             //      TwoFactorCode = await BotDatabase.MobileAuthenticator.GenerateToken().ConfigureAwait(false);

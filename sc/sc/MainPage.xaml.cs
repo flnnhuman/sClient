@@ -17,8 +17,12 @@ namespace sc
 {
     public partial class MainPage : ContentPage
     {
-        private static readonly string CacheDir = FileSystem.CacheDirectory;
-        private static readonly string MainDir = FileSystem.AppDataDirectory;
+        public static readonly string CacheDir = FileSystem.CacheDirectory;
+        public static readonly string MainDir = FileSystem.AppDataDirectory;
+
+        public string Login => LoginField.Text;
+        public string Password => PasswordField.Text;
+        public string TwoFactorCode => TwoFactorCodeField.Text;
 
         public MainPage()
         {
@@ -58,22 +62,14 @@ namespace sc
         private BotConfig BotConfig = new BotConfig();
         private BotDatabase BotDatabase = new BotDatabase(Path.Combine(MainDir, "bot"));
 
-        private async void Button_OnClicked(object sender, EventArgs e)
-        {
+        private void Button_OnClicked(object sender, EventArgs e) {
             ThreadPool.QueueUserWorkItem(o =>
             {
+                sc.InitializeGlobalConfigAndDatabase();
                 var bot = new Bot("bot", BotConfig, BotDatabase);
                 bot.InitModules().ConfigureAwait(false);
                 bot.InitStart();
             });
-        }
-
-        private void Button2_OnClicked(object sender, EventArgs e)
-        {
-        }
-
-        private async void Button3_OnClicked(object sender, EventArgs e)
-        {
         }
     }
 }
