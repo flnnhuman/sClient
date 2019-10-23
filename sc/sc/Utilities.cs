@@ -6,79 +6,64 @@ using System.Threading.Tasks;
 using Humanizer;
 using Humanizer.Localisation;
 
-namespace sc
-{
-    public static class Utilities
-    {
-        public static void InBackground(Action action, bool longRunning = false)
-        {
-            if (action == null)
-            {
-                sc.Logger.LogNullError(nameof(action));
+namespace sc {
+	public static class Utilities {
+		internal static string GetCookieValue(this CookieContainer cookieContainer, string url, string name) {
+			if ((cookieContainer == null) || string.IsNullOrEmpty(url) || string.IsNullOrEmpty(name)) {
+				sc.Logger.LogNullError(nameof(cookieContainer) + " || " + nameof(url) + " || " + nameof(name));
 
-                return;
-            }
+				return null;
+			}
 
-            var options = TaskCreationOptions.DenyChildAttach;
+			Uri uri;
 
-            if (longRunning) options |= TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness;
+			try {
+				uri = new Uri(url);
+			} catch (UriFormatException e) {
+				sc.Logger.LogGenericException(e);
 
-            Task.Factory.StartNew(action, CancellationToken.None, options, TaskScheduler.Default);
-        }
+				return null;
+			}
 
-        public static void InBackground<T>(Func<T> function, bool longRunning = false)
-        {
-            if (function == null)
-            {
-                sc.Logger.LogNullError(nameof(function));
+			CookieCollection cookies = cookieContainer.GetCookies(uri);
 
-                return;
-            }
+			return cookies.Count > 0 ? (from Cookie cookie in cookies where cookie.Name.Equals(name) select cookie.Value).FirstOrDefault() : null;
+		}
 
-            var options = TaskCreationOptions.DenyChildAttach;
+		public static void InBackground(Action action, bool longRunning = false) {
+			if (action == null) {
+				sc.Logger.LogNullError(nameof(action));
 
-            if (longRunning) options |= TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness;
+				return;
+			}
 
-            Task.Factory.StartNew(function, CancellationToken.None, options, TaskScheduler.Default);
-        }
+			TaskCreationOptions options = TaskCreationOptions.DenyChildAttach;
 
-        public static string ToHumanReadable(this TimeSpan timeSpan)
-        {
-            return timeSpan.Humanize(3, maxUnit: TimeUnit.Year, minUnit: TimeUnit.Second);
-        }
+			if (longRunning) {
+				options |= TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness;
+			}
 
-        internal static string GetCookieValue(this CookieContainer cookieContainer, string url, string name)
-        {
-            if (cookieContainer == null || string.IsNullOrEmpty(url) || string.IsNullOrEmpty(name))
-            {
-                sc.Logger.LogNullError(nameof(cookieContainer) + " || " + nameof(url) + " || " + nameof(name));
+			Task.Factory.StartNew(action, CancellationToken.None, options, TaskScheduler.Default);
+		}
 
-                return null;
-            }
+		public static void InBackground<T>(Func<T> function, bool longRunning = false) {
+			if (function == null) {
+				sc.Logger.LogNullError(nameof(function));
 
-            Uri uri;
+				return;
+			}
 
-            try
-            {
-                uri = new Uri(url);
-            }
-            catch (UriFormatException e)
-            {
-                sc.Logger.LogGenericException(e);
+			TaskCreationOptions options = TaskCreationOptions.DenyChildAttach;
 
-                return null;
-            }
+			if (longRunning) {
+				options |= TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness;
+			}
 
-            var cookies = cookieContainer.GetCookies(uri);
+			Task.Factory.StartNew(function, CancellationToken.None, options, TaskScheduler.Default);
+		}
 
-            return cookies.Count > 0
-                ? (from Cookie cookie in cookies where cookie.Name.Equals(name) select cookie.Value).FirstOrDefault()
-                : null;
-        }
+		public static bool IsClientErrorCode(this HttpStatusCode statusCode) => (statusCode >= HttpStatusCode.BadRequest) && (statusCode < HttpStatusCode.InternalServerError);
 
-        public static bool IsClientErrorCode(this HttpStatusCode statusCode)
-        {
-            return statusCode >= HttpStatusCode.BadRequest && statusCode < HttpStatusCode.InternalServerError;
-        }
-    }
+		public static string ToHumanReadable(this TimeSpan timeSpan) => timeSpan.Humanize(3, maxUnit: TimeUnit.Year, minUnit: TimeUnit.Second);
+	}
 }

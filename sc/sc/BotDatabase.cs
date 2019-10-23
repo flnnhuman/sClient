@@ -2,48 +2,47 @@
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 
-namespace sc
-{
-    public class BotDatabase : SerializableFile
-    {
-        internal string LoginKey
-        {
-            get => BackingLoginKey;
+namespace sc {
+	public class BotDatabase : SerializableFile {
+		[JsonProperty(PropertyName = "_LoginKey")]
+		private string BackingLoginKey;
 
-            set
-            {
-                if (BackingLoginKey == value) return;
+		//  [JsonProperty(PropertyName = "_MobileAuthenticator")]
+		// private MobileAuthenticator BackingMobileAuthenticator;
+		// 
+		// internal MobileAuthenticator MobileAuthenticator {
+		//     get => BackingMobileAuthenticator;
 
-                BackingLoginKey = value;
-                Utilities.InBackground(Save);
-            }
-        }
+		//     set {
+		//         if (BackingMobileAuthenticator == value) {
+		//             return;
+		//         }
 
-        [JsonProperty(PropertyName = "_LoginKey")]
-        private string BackingLoginKey;
-
-        //  [JsonProperty(PropertyName = "_MobileAuthenticator")]
-        // private MobileAuthenticator BackingMobileAuthenticator;
-        // 
-        // internal MobileAuthenticator MobileAuthenticator {
-        //     get => BackingMobileAuthenticator;
-
-        //     set {
-        //         if (BackingMobileAuthenticator == value) {
-        //             return;
-        //         }
-
-        //         BackingMobileAuthenticator = value;
-        //         Utilities.InBackground(Save);
-        //     }
-        // }
+		//         BackingMobileAuthenticator = value;
+		//         Utilities.InBackground(Save);
+		//     }
+		// }
 
 
-        public BotDatabase([NotNull] string filePath)
-        {
-            if (string.IsNullOrEmpty(filePath)) throw new ArgumentNullException(nameof(filePath));
+		public BotDatabase([NotNull] string filePath) {
+			if (string.IsNullOrEmpty(filePath)) {
+				throw new ArgumentNullException(nameof(filePath));
+			}
 
-            FilePath = filePath;
-        }
-    }
+			FilePath = filePath;
+		}
+
+		internal string LoginKey {
+			get => BackingLoginKey;
+
+			set {
+				if (BackingLoginKey == value) {
+					return;
+				}
+
+				BackingLoginKey = value;
+				Utilities.InBackground(Save);
+			}
+		}
+	}
 }

@@ -1,55 +1,94 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
+using SteamKit2;
+using SteamKit2.Discovery;
 
-namespace sc
-{
-    public class sc
-    {
-        [PublicAPI] public static readonly Logger Logger = new Logger(nameof(sc));
+namespace sc {
+	public class sc {
+		public static readonly Logger Logger = new Logger(nameof(sc));
 
-        [PublicAPI] public static GlobalConfig GlobalConfig { get; private set; }
-        [PublicAPI] public static GlobalDatabase GlobalDatabase { get; private set; }
-        [PublicAPI] public static WebBrowser WebBrowser { get; internal set; }
+		public static GlobalConfig GlobalConfig { get; private set; }
+		public static GlobalDatabase GlobalDatabase { get; private set; }
+		public static WebBrowser WebBrowser { get; internal set; }
 
+		internal static async Task Init() {
+			WebBrowser = new WebBrowser(Logger,  true);
+			//await RegisterBots().ConfigureAwait(false);
 
-        internal static void InitGlobalConfig(GlobalConfig globalConfig)
-        {
-            if (globalConfig == null)
-            {
-                Logger.LogNullError(nameof(globalConfig));
+		}
 
-                return;
-            }
+		/*internal async void RegisterServers()
+		{
+			IEnumerable<ServerRecord> servers =
+				await GlobalDatabase.ServerListProvider.FetchServerListAsync().ConfigureAwait(false);
 
-            if (GlobalConfig != null) return;
+			if (servers?.Any() != true)
+			{
+				Logger.LogGenericInfo(string.Format(Strings.Initializing, nameof(SteamDirectory)));
 
-            GlobalConfig = globalConfig;
-        }
+				SteamConfiguration steamConfiguration = SteamConfiguration.Create(builder =>
+					builder.WithProtocolTypes(GlobalConfig.SteamProtocols).WithCellID(GlobalDatabase.CellID)
+						.WithServerListProvider(GlobalDatabase.ServerListProvider)
+						.WithHttpClientFactory(() => WebBrowser.GenerateDisposableHttpClient()));
 
-        internal static void InitGlobalDatabase(GlobalDatabase globalDatabase)
-        {
-            if (globalDatabase == null)
-            {
-                Logger.LogNullError(nameof(globalDatabase));
+				try
+				{
+					await SteamDirectory.LoadAsync(steamConfiguration).ConfigureAwait(false);
+					Logger.LogGenericInfo(Strings.Success);
+				}
+				catch
+				{
+					Logger.LogGenericWarning(Strings.BotSteamDirectoryInitializationFailed);
+					await Task.Delay(5000).ConfigureAwait(false);
+				}
 
-                return;
-            }
+			}
+		}
+		 */
+		internal static void InitGlobalConfig(GlobalConfig globalConfig) {
+			if (globalConfig == null) {
+				Logger.LogNullError(nameof(globalConfig));
 
-            if (GlobalDatabase != null) return;
+				return;
+			}
 
-            GlobalDatabase = globalDatabase;
-        }
+			if (GlobalConfig != null) {
+				return;
+			}
 
-        internal enum EUserInputType : byte
-        {
-            Unknown,
-            DeviceID,
-            Login,
-            Password,
-            SteamGuard,
-            SteamParentalCode,
-            TwoFactorAuthentication
-        }
-    }
+			GlobalConfig = globalConfig;
+		}
+
+		internal static void InitGlobalDatabase(GlobalDatabase globalDatabase) {
+			if (globalDatabase == null) {
+				Logger.LogNullError(nameof(globalDatabase));
+
+				return;
+			}
+
+			if (GlobalDatabase != null) {
+				return;
+			}
+
+			GlobalDatabase = globalDatabase;
+		}
+
+		internal static void InitializeGlobalConfigAndDatabase() {
+			InitGlobalConfig(GlobalConfig.CreateOrLoad(Path.Combine(MainPage.MainDir, "config.json")));
+			InitGlobalDatabase(GlobalDatabase.CreateOrLoad(Path.Combine(MainPage.MainDir, "db.json")));
+		}
+
+		internal enum EUserInputType : byte {
+			Unknown,
+			DeviceID,
+			Login,
+			Password,
+			SteamGuard,
+			SteamParentalCode,
+			TwoFactorAuthentication
+		}
+	}
 }
