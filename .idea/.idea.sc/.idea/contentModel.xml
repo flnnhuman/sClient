@@ -38,6 +38,7 @@
         <e p="second page.xaml" t="Include" />
         <e p="second page.xaml.cs" t="Include" />
         <e p="SerializableFile.cs" t="Include" />
+        <e p="SharedInfo.cs" t="Include" />
         <e p="Steam.cs" t="Include" />
         <e p="Strings.Designer.cs" t="Include" />
         <e p="Strings.resx" t="Include" />

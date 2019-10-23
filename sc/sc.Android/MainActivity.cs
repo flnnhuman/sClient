@@ -6,8 +6,7 @@ using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
 
 namespace sc.Android {
-	[Activity(Label = "sc", Theme = "@style/MainTheme", MainLauncher = true,
-		ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
+	[Activity(Label = "sc", Theme = "@style/MainTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
 	public class MainActivity : FormsAppCompatActivity {
 		protected override void OnCreate(Bundle savedInstanceState) {
 			TabLayoutResource = Resource.Layout.Tabbar;
