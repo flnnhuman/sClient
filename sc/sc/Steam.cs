@@ -134,7 +134,7 @@ namespace sc {
 			//            CallbackManager.Subscribe<SteamApps.GuestPassListCallback>(OnGuestPassList);
 			//            CallbackManager.Subscribe<SteamApps.LicenseListCallback>(OnLicenseList);
 			//         
-			//            SteamFriends = SteamClient.GetHandler<SteamFriends>();
+			SteamFriends = SteamClient.GetHandler<SteamFriends>();
 			//            CallbackManager.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
 			//            CallbackManager.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
 			//         
@@ -410,6 +410,7 @@ namespace sc {
 			Logger.LogGenericInfo(Strings.BotLoggingIn);
 
 			TwoFactorCode = mainPage.TwoFactorCode;
+			
 			//  if (string.IsNullOrEmpty(TwoFactorCode) && HasMobileAuthenticator
 			//  ) // We should always include 2FA token, even if it's not required
 			//      TwoFactorCode = await BotDatabase.MobileAuthenticator.GenerateToken().ConfigureAwait(false);
@@ -424,7 +425,7 @@ namespace sc {
 				Password = password,
 				SentryFileHash = sentryFileHash,
 				ShouldRememberPassword = BotConfig.UseLoginKeys,
-				TwoFactorCode = TwoFactorCode,
+				TwoFactorCode = !string.IsNullOrEmpty(TwoFactorCode) ? TwoFactorCode : null,
 				Username = username
 			};
 

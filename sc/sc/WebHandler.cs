@@ -10,7 +10,8 @@ using sc.Helpers;
 using SteamKit2;
 
 namespace sc {
-	public class WebHandler {
+	public class WebHandler
+	{
 		public const string SteamCommunityURL = "https://" + SteamCommunityHost;
 		public const string SteamHelpURL = "https://" + SteamHelpHost;
 		public const string SteamStoreURL = "https://" + SteamStoreHost;
@@ -26,16 +27,41 @@ namespace sc {
 		private const string SteamHelpHost = "help.steampowered.com";
 		private const string SteamStoreHost = "store.steampowered.com";
 
-		public static readonly WebBrowser WebBrowser;
+		public static WebBrowser WebBrowser;
 
 
-		private static readonly ImmutableDictionary<string, (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore)> WebLimitingSemaphores = new Dictionary<string, (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore)>(4, StringComparer.Ordinal) {
-			{nameof(WebHandler), (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))},
-			{SteamCommunityURL, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))},
-			{SteamHelpURL, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))},
-			{SteamStoreURL, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))},
-			{WebAPI.DefaultBaseAddress.Host, (new SemaphoreSlim(1, 1), new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))}
-		}.ToImmutableDictionary(StringComparer.Ordinal);
+		private static readonly
+			ImmutableDictionary<string, (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore)>
+			WebLimitingSemaphores =
+				new Dictionary<string, (SemaphoreSlim RateLimitingSemaphore, SemaphoreSlim OpenConnectionsSemaphore)>(4,
+					StringComparer.Ordinal)
+				{
+					{
+						nameof(WebHandler),
+						(new SemaphoreSlim(1, 1),
+							new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))
+					},
+					{
+						SteamCommunityURL,
+						(new SemaphoreSlim(1, 1),
+							new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))
+					},
+					{
+						SteamHelpURL,
+						(new SemaphoreSlim(1, 1),
+							new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))
+					},
+					{
+						SteamStoreURL,
+						(new SemaphoreSlim(1, 1),
+							new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))
+					},
+					{
+						WebAPI.DefaultBaseAddress.Host,
+						(new SemaphoreSlim(1, 1),
+							new SemaphoreSlim(WebBrowser.MaxConnections, WebBrowser.MaxConnections))
+					}
+				}.ToImmutableDictionary(StringComparer.Ordinal);
 
 		private readonly Bot Bot;
 		public readonly ArchiCacheable<string> CachedApiKey;
@@ -43,8 +69,16 @@ namespace sc {
 		private DateTime LastSessionCheck;
 		private DateTime LastSessionRefresh;
 		private string VanityURL;
-		public WebHandler(Bot bot) => Bot = bot ?? throw new ArgumentNullException(nameof(bot));
-		private Logger Logger => Bot.Logger;
+
+		public WebHandler(Bot bot)
+		{
+			Bot = bot ?? throw new ArgumentNullException(nameof(bot));
+			WebBrowser = new WebBrowser(bot.Logger);
+			
+		}
+		
+
+	private Logger Logger => Bot.Logger;
 
 		public async Task<string> GetAbsoluteProfileURL(bool waitForInitialization = true) {
 			if (waitForInitialization && !Initialized) {

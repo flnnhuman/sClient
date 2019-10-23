@@ -31,6 +31,7 @@ namespace sc {
 		private void Button_OnClicked(object sender, EventArgs e) {
 			ThreadPool.QueueUserWorkItem(o => {
 				sc.InitializeGlobalConfigAndDatabase();
+				sc.Init().ConfigureAwait(false);
 				Bot bot = new Bot("bot", BotConfig, BotDatabase);
 				bot.InitModules().ConfigureAwait(false);
 				bot.InitStart();

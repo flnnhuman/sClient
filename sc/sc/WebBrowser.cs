@@ -12,6 +12,8 @@ namespace sc {
 			ReturnClientErrors = 1
 		}
 
+		private const byte ExtendedTimeoutMultiplier = 10; // Defines multiplier of timeout for WebBrowsers dealing with huge data (ASF update)
+
 		public const byte MaxTries = 5;
 		internal const byte MaxConnections = 5;
 
@@ -20,6 +22,36 @@ namespace sc {
 		private readonly HttpClientHandler HttpClientHandler;
 		private readonly Logger Logger;
 		public TimeSpan Timeout => HttpClient.Timeout;
+
+		internal WebBrowser([NotNull] Logger logger, bool extendedTimeout = false) {
+			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+			HttpClientHandler = new HttpClientHandler {
+				AllowAutoRedirect = false, // This must be false if we want to handle custom redirection schemes such as "steammobile://"
+				AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip,
+				CookieContainer = CookieContainer
+			};
+
+			
+
+			//if (!RuntimeCompatibility.IsRunningOnMono) {
+				HttpClientHandler.MaxConnectionsPerServer = MaxConnections;
+			//}
+
+			HttpClient = GenerateDisposableHttpClient(extendedTimeout);
+		}
+
+		public HttpClient GenerateDisposableHttpClient(bool extendedTimeout = false) {
+			HttpClient result = new HttpClient(HttpClientHandler, false) {
+				Timeout = TimeSpan.FromSeconds(extendedTimeout ? ExtendedTimeoutMultiplier * sc.GlobalConfig.ConnectionTimeout : sc.GlobalConfig.ConnectionTimeout)
+			};
+
+			// Most web services expect that UserAgent is set, so we declare it globally
+			// If you by any chance came here with a very "clever" idea of hiding your ass by changing default ASF user-agent then here is a very good advice from me: don't, for your own safety - you've been warned
+			result.DefaultRequestHeaders.UserAgent.ParseAdd(SharedInfo.PublicIdentifier + "/" + SharedInfo.Version + " (+" + SharedInfo.ProjectURL + ")");
+			 
+			return result;
+		}
 
 		public void Dispose() {
 			HttpClient.Dispose();
