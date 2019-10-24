@@ -12,6 +12,7 @@
             <Entry Text="" x:Name="PasswordField" IsPassword="True" />
             <Entry Text="" x:Name="TwoFactorCodeField" />
             <Button Clicked="Button_OnClicked" HorizontalOptions="Center" />
+            <Button Clicked="Button2_OnClicked" HorizontalOptions="Center" />
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>

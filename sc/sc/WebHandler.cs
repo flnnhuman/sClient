@@ -76,7 +76,12 @@ namespace sc {
 			WebBrowser = new WebBrowser(bot.Logger);
 			
 		}
-		
+		public void Dispose() {
+			CachedApiKey.Dispose();
+			//CachedPublicInventory.Dispose();
+			//SessionSemaphore.Dispose();
+			WebBrowser.Dispose();
+		}
 
 	private Logger Logger => Bot.Logger;
 

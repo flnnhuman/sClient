@@ -215,11 +215,47 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Your bot config is invalid. Please verify content of {0} and try again!.
+        /// </summary>
+        public static string ErrorBotConfigInvalid {
+            get {
+                return ResourceManager.GetString("ErrorBotConfigInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configured {0} property is invalid: {1}.
+        /// </summary>
+        public static string ErrorConfigPropertyInvalid {
+            get {
+                return ResourceManager.GetString("ErrorConfigPropertyInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Persistent database could not be loaded, if issue persists, please remove {0} in order to recreate the database!.
+        /// </summary>
+        public static string ErrorDatabaseInvalid {
+            get {
+                return ResourceManager.GetString("ErrorDatabaseInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Request failing: {0}.
         /// </summary>
         public static string ErrorFailingRequest {
             get {
                 return ResourceManager.GetString("ErrorFailingRequest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} is empty!.
+        /// </summary>
+        public static string ErrorIsEmpty {
+            get {
+                return ResourceManager.GetString("ErrorIsEmpty", resourceCulture);
             }
         }
         
@@ -238,6 +274,24 @@ namespace sc {
         public static string ErrorRequestFailedTooManyTimes {
             get {
                 return ResourceManager.GetString("ErrorRequestFailedTooManyTimes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} was created..
+        /// </summary>
+        public static string FileCreated {
+            get {
+                return ResourceManager.GetString("FileCreated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} was loaded..
+        /// </summary>
+        public static string FileLoaded {
+            get {
+                return ResourceManager.GetString("FileLoaded", resourceCulture);
             }
         }
         

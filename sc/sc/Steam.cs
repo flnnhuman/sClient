@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,10 +39,10 @@ namespace sc {
 
 		private const ProtocolTypes DefaultSteamProtocols = ProtocolTypes.All;
 
-		private static readonly string CacheDir = FileSystem.CacheDirectory;
-		private static readonly string MainDir = FileSystem.AppDataDirectory;
+		public static readonly string CacheDir = FileSystem.CacheDirectory;
+		public static readonly string MainDir = FileSystem.AppDataDirectory;
 
-		private static readonly SemaphoreSlim BotsSemaphore = new SemaphoreSlim(1, 1);
+		public static readonly SemaphoreSlim BotsSemaphore = new SemaphoreSlim(1, 1);
 		private static readonly SemaphoreSlim LoginRateLimitingSemaphore = new SemaphoreSlim(1, 1);
 		private static readonly SemaphoreSlim LoginSemaphore = new SemaphoreSlim(1, 1);
 		internal readonly BotDatabase BotDatabase;
@@ -79,6 +81,8 @@ namespace sc {
 		private bool LibraryLocked;
 		public Logger Logger;
 
+		internal static ConcurrentDictionary<string, Bot> Bots { get; private set; }
+		
 		private Timer PlayingWasBlockedTimer;
 
 		private bool ReconnectOnUserInitiated;
@@ -88,6 +92,8 @@ namespace sc {
 		private uint TradesCount;
 		private string TwoFactorCode;
 		private byte TwoFactorCodeFailures;
+
+		//public static Bot bot;
 
 
 		public Bot([NotNull] string botName, [NotNull] BotConfig botConfig, [NotNull] BotDatabase botDatabase) {
@@ -143,8 +149,8 @@ namespace sc {
 			SteamUser = SteamClient.GetHandler<SteamUser>();
 			//            CallbackManager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
 			CallbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
-			//            CallbackManager.Subscribe<SteamUser.LoginKeyCallback>(OnLoginKey);
-			//            CallbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth);
+			CallbackManager.Subscribe<SteamUser.LoginKeyCallback>(OnLoginKey);
+			CallbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth);
 			//            CallbackManager.Subscribe<SteamUser.WalletInfoCallback>(OnWalletUpdate);
 
 			//CallbackManager.Subscribe<SCHandler.PlayingSessionStateCallback>(OnPlayingSessionState);
@@ -289,7 +295,7 @@ namespace sc {
 
 			Logger.LogGenericError(Strings.BotHeartBeatFailed);
 			//await Destroy(true).ConfigureAwait(false);
-			// await RegisterBot(BotName).ConfigureAwait(false);
+			 await RegisterBot(BotName).ConfigureAwait(false);
 		}
 
 		private void InitPlayingWasBlockedTimer() {
@@ -538,10 +544,10 @@ namespace sc {
 
 					break;
 				case EResult.AccountLogonDenied:
-					/*
-					var authCode = await Logging.GetUserInput(sc.EUserInputType.SteamGuard, BotName)
-					    .ConfigureAwait(false);
-
+					
+					//var authCode = await Logging.GetUserInput(sc.EUserInputType.SteamGuard, BotName)
+					//    .ConfigureAwait(false);
+					string authCode = null ;
 					if (string.IsNullOrEmpty(authCode))
 					{
 					    Stop();
@@ -549,19 +555,21 @@ namespace sc {
 					    break;
 					}
 
-					SetUserInput(EUserInputType.SteamGuard, authCode);
-					*/
+					//SetUserInput(EUserInputType.SteamGuard, authCode);
+					
 
 					break;
 				case EResult.AccountLoginDeniedNeedTwoFactor:
+					string twoFactorCode = null;
 					//if (!HasMobileAuthenticator) {
 					//	string twoFactorCode = await Logging.GetUserInput(ASF.EUserInputType.TwoFactorAuthentication, BotName).ConfigureAwait(false);
 					//
-					//	if (string.IsNullOrEmpty(twoFactorCode)) {
-					//		Stop();
-					//
-					//		break;
-					//	}
+					
+						if (string.IsNullOrEmpty(twoFactorCode)) {
+							Stop();
+					
+							break;
+						}
 					//
 					//	SetUserInput(ASF.EUserInputType.TwoFactorAuthentication, twoFactorCode);
 					//}
@@ -709,6 +717,83 @@ namespace sc {
 			}
 		}
 
+		private void OnLoginKey(SteamUser.LoginKeyCallback callback) {
+			if (string.IsNullOrEmpty(callback?.LoginKey)) {
+				Logger.LogNullError(nameof(callback) + " || " + nameof(callback.LoginKey));
+
+				return;
+			}
+
+			if (!BotConfig.UseLoginKeys) {
+				return;
+			}
+			string loginKey = callback.LoginKey;
+			
+			BotDatabase.LoginKey = loginKey;
+			SteamUser.AcceptNewLoginKey(callback);
+		}
+		
+		private async void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback) {
+			if (callback == null) {
+				Logger.LogNullError(nameof(callback));
+
+				return;
+			}
+
+			string sentryFilePath = GetFilePath(EFileType.SentryFile);
+
+			sentryFilePath = Path.Combine(MainDir, sentryFilePath);
+			if (string.IsNullOrEmpty(sentryFilePath)) {
+				Logger.LogNullError(nameof(sentryFilePath));
+
+				return;
+			}
+
+			long fileSize;
+			byte[] sentryHash;
+
+			try {
+				FileStream fileStream = File.Open(sentryFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+
+				fileStream.Seek(callback.Offset, SeekOrigin.Begin);
+
+				await fileStream.WriteAsync(callback.Data, 0, callback.BytesToWrite).ConfigureAwait(false);
+
+				fileSize = fileStream.Length;
+				fileStream.Seek(0, SeekOrigin.Begin);
+
+				SHA1CryptoServiceProvider sha = new SHA1CryptoServiceProvider();
+
+				sentryHash = sha.ComputeHash(fileStream);
+			} catch (Exception e) {
+				Logger.LogGenericException(e);
+
+				try {
+					File.Delete(sentryFilePath);
+				} catch {
+					// Ignored, we can only try to delete faulted file at best
+				}
+
+				return;
+			}
+
+			// Inform the steam servers that we're accepting this sentry file
+			SteamUser.SendMachineAuthResponse(
+				new SteamUser.MachineAuthDetails {
+					BytesWritten = callback.BytesToWrite,
+					FileName = callback.FileName,
+					FileSize = (int) fileSize,
+					JobID = callback.JobID,
+					LastError = 0,
+					Offset = callback.Offset,
+					OneTimePassword = callback.OneTimePassword,
+					Result = EResult.OK,
+					SentryFileHash = sentryHash
+				}
+			);
+		}
+
+
 		public static async Task<string> ReadAllTextAsync([NotNull] string path) => File.ReadAllText(path);
 
 		internal async Task<bool> RefreshSession() {
@@ -799,6 +884,107 @@ namespace sc {
 			}
 		}
 
+			internal static async Task RegisterBot(string botName) {
+			if (string.IsNullOrEmpty(botName)) {
+				sc.Logger.LogNullError(nameof(botName));
+
+				return;
+			}
+
+			//if (Bots.ContainsKey(botName)) {
+			//	return;
+			//}
+
+			string configFilePath = GetFilePath(botName, EFileType.Config);
+
+			if (string.IsNullOrEmpty(configFilePath)) {
+				sc.Logger.LogNullError(nameof(configFilePath));
+
+				return;
+			}
+
+			//BotConfig botConfig = await BotConfig.Load(configFilePath).ConfigureAwait(false);
+			BotConfig botConfig = BotConfig.CreateOrLoad(configFilePath);
+			if (botConfig == null) {
+				sc.Logger.LogGenericError(string.Format(Strings.ErrorBotConfigInvalid, configFilePath));
+
+				return;
+			}
+
+			if (Debugging.IsDebugConfigured) {
+				sc.Logger.LogGenericDebug(configFilePath + ": " + JsonConvert.SerializeObject(botConfig, Formatting.Indented));
+			}
+
+			string databaseFilePath = GetFilePath(botName, EFileType.Database);
+
+			if (string.IsNullOrEmpty(databaseFilePath)) {
+				sc.Logger.LogNullError(nameof(databaseFilePath));
+
+				return;
+			}
+
+			BotDatabase botDatabase = await BotDatabase.CreateOrLoad(databaseFilePath).ConfigureAwait(false);
+
+			
+			if (botDatabase == null) {
+				sc.Logger.LogGenericError(string.Format(Strings.ErrorDatabaseInvalid, databaseFilePath));
+
+				return;
+			}
+
+			if (Debugging.IsDebugConfigured) {
+				sc.Logger.LogGenericDebug(databaseFilePath + ": " + JsonConvert.SerializeObject(botDatabase, Formatting.Indented));
+			}
+
+			Bot bot;
+			
+
+			await BotsSemaphore.WaitAsync().ConfigureAwait(false);
+
+			try {
+				if (Bots.ContainsKey(botName)) {
+					return;
+				}
+
+				bot = new Bot(botName, botConfig, botDatabase);
+
+				if (!Bots.TryAdd(botName, bot)) {
+					sc.Logger.LogNullError(nameof(bot));
+					bot.Dispose();
+
+					return;
+				}
+			} finally {
+				BotsSemaphore.Release();
+			}
+			
+			await bot.InitModules().ConfigureAwait(false);
+			bot.InitStart();
+		}
+			
+			public void Dispose() {
+				// Those are objects that are always being created if constructor doesn't throw exception
+				//Actions.Dispose();
+				CallbackSemaphore.Dispose();
+				//GamesRedeemerInBackgroundSemaphore.Dispose();
+				//InitializationSemaphore.Dispose();
+				//MessagingSemaphore.Dispose();
+				//PICSSemaphore.Dispose();
+
+				// Those are objects that might be null and the check should be in-place
+				WebHandler?.Dispose();
+				BotDatabase?.Dispose();
+				//CardsFarmer?.Dispose();
+				ConnectionFailureTimer?.Dispose();
+				GamesRedeemerInBackgroundTimer?.Dispose();
+				HeartBeatTimer?.Dispose();
+				PlayingWasBlockedTimer?.Dispose();
+				//SendItemsTimer?.Dispose();
+				//Statistics?.Dispose();
+				//SteamSaleEvent?.Dispose();
+				//Trading?.Dispose();
+			}
+	
 		internal async Task Start() {
 			if (KeepRunning) {
 				return;
@@ -872,5 +1058,55 @@ namespace sc {
 			PlayingWasBlockedTimer.Dispose();
 			PlayingWasBlockedTimer = null;
 		}
+		internal enum EFileType : byte {
+			Config,
+			Database,
+			//KeysToRedeem,
+			//KeysToRedeemUnused,
+			//KeysToRedeemUsed,
+			MobileAuthenticator,
+			SentryFile
+		}
+		private string GetFilePath(EFileType fileType) {
+			if (!Enum.IsDefined(typeof(EFileType), fileType)) {
+				sc.Logger.LogNullError(nameof(fileType));
+
+				return null;
+			}
+
+			return GetFilePath(BotName, fileType);
+		}
+
+		internal static string GetFilePath(string botName, EFileType fileType) {
+			if (string.IsNullOrEmpty(botName) || !Enum.IsDefined(typeof(EFileType), fileType)) {
+				sc.Logger.LogNullError(nameof(botName) + " || " + nameof(fileType));
+
+				return null;
+			}
+
+			string botPath = Path.Combine(SharedInfo.ConfigDirectory, botName);
+
+			switch (fileType) {
+				case EFileType.Config:
+					return botPath + SharedInfo.JsonConfigExtension;
+				case EFileType.Database:
+					return botPath + SharedInfo.DatabaseExtension;
+				//case EFileType.KeysToRedeem:
+				//	return botPath + SharedInfo.KeysExtension;
+				//case EFileType.KeysToRedeemUnused:
+				//	return botPath + SharedInfo.KeysExtension + SharedInfo.KeysUnusedExtension;
+				//case EFileType.KeysToRedeemUsed:
+				//	return botPath + SharedInfo.KeysExtension + SharedInfo.KeysUsedExtension;
+				case EFileType.MobileAuthenticator:
+					return botPath + SharedInfo.MobileAuthenticatorExtension;
+				case EFileType.SentryFile:
+					return botPath + SharedInfo.SentryHashExtension;
+				default:
+					sc.Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(fileType), fileType));
+
+					return null;
+			}
+		}
+
 	}
 }

@@ -10,7 +10,13 @@ namespace sc
         internal const string AssemblyName = "SClient";
         internal const string GithubRepo = "flnnhuman/" + AssemblyName;
         internal const string ProjectURL = "https://github.com/" + GithubRepo;
-    
+        internal const string SentryHashExtension = ".bin";
+        internal const string MobileAuthenticatorExtension = ".maFile";
+        internal const string JsonConfigExtension = ".json";
+        internal const string KeysExtension = ".keys";
+        internal const string KeysUnusedExtension = ".unused";
+        internal const string DatabaseExtension = ".db";
+        internal const string ConfigDirectory = "config";
         internal static Version Version =>Version.Parse(AppInfo.VersionString);
         
         internal static string PublicIdentifier => AssemblyName;

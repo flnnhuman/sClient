@@ -25,11 +25,13 @@ namespace sc {
 				sc.Logger.LogNullError(nameof(filePath));
 				return null;
 			}
+			string filePathLog="config.json";
 
 			GlobalConfig globalConfig;
 			if (!File.Exists(filePath)) {
 				globalConfig = new GlobalConfig();
 				globalConfig.Write(filePath);
+				sc.Logger.LogGenericInfo(string.Format( Strings.FileCreated,filePathLog));
 				return globalConfig;
 			}
 
@@ -45,7 +47,7 @@ namespace sc {
 				sc.Logger.LogGenericWarningException(e);
 				return null;
 			}
-
+			sc.Logger.LogGenericInfo(string.Format( Strings.FileLoaded,filePathLog));
 			return globalConfig;
 		}
 
