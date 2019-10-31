@@ -17,7 +17,7 @@ namespace sc {
 		public const byte MaxTries = 5;
 		internal const byte MaxConnections = 5;
 
-		internal readonly CookieContainer CookieContainer = new CookieContainer();
+		public readonly CookieContainer CookieContainer = new CookieContainer();
 		private readonly HttpClient HttpClient;
 		private readonly HttpClientHandler HttpClientHandler;
 		private readonly Logger Logger;

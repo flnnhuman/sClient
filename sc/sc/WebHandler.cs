@@ -27,7 +27,7 @@ namespace sc {
 		private const string SteamHelpHost = "help.steampowered.com";
 		private const string SteamStoreHost = "store.steampowered.com";
 
-		public static WebBrowser WebBrowser;
+		public WebBrowser WebBrowser;
 
 
 		private static readonly

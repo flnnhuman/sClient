@@ -673,20 +673,7 @@ namespace sc {
 					if (BotConfig.OnlineStatus != EPersonaState.Offline) {
 						SteamFriends.SetPersonaState(BotConfig.OnlineStatus);
 					}
-
-					//	if (BotConfig.SteamMasterClanID != 0) {
-					//		Utilities.InBackground(
-					//			async () => {
-					//				if (!await ArchiWebHandler.JoinGroup(BotConfig.SteamMasterClanID).ConfigureAwait(false)) {
-					//					Logger.LogGenericWarning(string.Format(Strings.WarningFailedWithError, nameof(ArchiWebHandler.JoinGroup)));
-					//				}
-					//	
-					//				await JoinMasterChatGroupID().ConfigureAwait(false);
-					//			}
-					//		);
-					//	}
-
-					//await PluginsCore.OnBotLoggedOn(this).ConfigureAwait(false);
+					Device.BeginInvokeOnMainThread(()=>Application.Current.MainPage = new NavigationPage(new second_page()));
 
 					break;
 				case EResult.InvalidPassword:
@@ -715,6 +702,8 @@ namespace sc {
 
 					break;
 			}
+			
+			
 		}
 
 		private void OnLoginKey(SteamUser.LoginKeyCallback callback) {

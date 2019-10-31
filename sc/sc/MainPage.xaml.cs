@@ -16,7 +16,7 @@ namespace sc {
 			Success
 		}
 
-		private static Bot bot;
+		public static Bot bot;
 		
 		public static readonly string CacheDir = FileSystem.CacheDirectory;
 		public static readonly string MainDir = FileSystem.AppDataDirectory;

@@ -12,6 +12,7 @@
         <e p="bin" t="ExcludeRecursive" />
         <e p="BotConfig.cs" t="Include" />
         <e p="BotDatabase.cs" t="Include" />
+        <e p="CustomWebView.cs" t="Include" />
         <e p="Debugging.cs" t="Include" />
         <e p="Events.cs" t="Include" />
         <e p="GlobalConfig.cs" t="Include" />
@@ -29,6 +30,7 @@
         </e>
         <e p="sc.cs" t="Include" />
         <e p="sc.csproj" t="IncludeRecursive" />
+        <e p="sc.csproj.DotSettings" t="Include" />
         <e p="SCHandler.cs" t="Include" />
         <e p="second page.xaml" t="Include" />
         <e p="second page.xaml.cs" t="Include" />
@@ -45,9 +47,8 @@
         <e p="Assets" t="Include">
           <e p="AboutAssets.txt" t="Include" />
         </e>
-        <e p="bin" t="ExcludeRecursive" />
+        <e p="CustomWebViewRenderer.cs" t="Include" />
         <e p="MainActivity.cs" t="Include" />
-        <e p="obj" t="ExcludeRecursive" />
         <e p="Properties" t="Include">
           <e p="AndroidManifest.xml" t="Include" />
           <e p="AssemblyInfo.cs" t="Include" />
@@ -73,11 +74,9 @@
             <e p="Contents.json" t="Include" />
           </e>
         </e>
-        <e p="bin" t="ExcludeRecursive" />
         <e p="Entitlements.plist" t="Include" />
         <e p="Info.plist" t="Include" />
         <e p="Main.cs" t="Include" />
-        <e p="obj" t="ExcludeRecursive" />
         <e p="Properties" t="Include">
           <e p="AssemblyInfo.cs" t="Include" />
         </e>
