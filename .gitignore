@@ -14,6 +14,7 @@
 [Rr]elease/
 [Bb]in/
 [Oo]bj/
+[Pp]ackages/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -22,6 +23,7 @@
 [Dd]ebugPS/
 [Rr]eleasePS/
 dlldata.c
+
 
 # ReSharper is a .NET coding add-in
 _ReSharper*/
