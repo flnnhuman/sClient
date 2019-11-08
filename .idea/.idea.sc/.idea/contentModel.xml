@@ -12,7 +12,6 @@
         <e p="bin" t="ExcludeRecursive" />
         <e p="BotConfig.cs" t="Include" />
         <e p="BotDatabase.cs" t="Include" />
-        <e p="CustomWebView.cs" t="Include" />
         <e p="Debugging.cs" t="Include" />
         <e p="Events.cs" t="Include" />
         <e p="GlobalConfig.cs" t="Include" />
@@ -47,8 +46,9 @@
         <e p="Assets" t="Include">
           <e p="AboutAssets.txt" t="Include" />
         </e>
-        <e p="CustomWebViewRenderer.cs" t="Include" />
+        <e p="bin" t="ExcludeRecursive" />
         <e p="MainActivity.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive" />
         <e p="Properties" t="Include">
           <e p="AndroidManifest.xml" t="Include" />
           <e p="AssemblyInfo.cs" t="Include" />
@@ -74,9 +74,11 @@
             <e p="Contents.json" t="Include" />
           </e>
         </e>
+        <e p="bin" t="ExcludeRecursive" />
         <e p="Entitlements.plist" t="Include" />
         <e p="Info.plist" t="Include" />
         <e p="Main.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive" />
         <e p="Properties" t="Include">
           <e p="AssemblyInfo.cs" t="Include" />
         </e>
@@ -86,6 +88,41 @@
         <e p="sc.iOS.csproj" t="IncludeRecursive" />
       </e>
       <e p="sc.sln" t="IncludeFlat" />
+      <e p="Xam.Plugin.WebView.Abstractions" t="IncludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="Delegates" t="Include">
+          <e p="DecisionHandlerDelegate.cs" t="Include" />
+        </e>
+        <e p="Enumerations" t="Include">
+          <e p="WebViewContentType.cs" t="Include" />
+        </e>
+        <e p="FormsWebView.cs" t="Include" />
+        <e p="FormsWebView.Static.cs" t="Include" />
+        <e p="IFormsWebView.cs" t="Include" />
+        <e p="Models" t="Include">
+          <e p="ActionEvent.cs" t="Include" />
+        </e>
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="netstandard1.0" t="Include">
+              <e p="Xam.Plugin.WebView.Abstractions.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Xam.Plugin.WebView.Abstractions.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="Xam.Plugin.WebView.Droid" t="IncludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="FormsWebViewBridge.cs" t="Include" />
+        <e p="FormsWebViewChromeClient.cs" t="Include" />
+        <e p="FormsWebViewClient.cs" t="Include" />
+        <e p="FormsWebViewRenderer.cs" t="Include" />
+        <e p="JavascriptValueCallback.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive" />
+        <e p="packages.config" t="Include" />
+        <e p="Properties" t="Include" />
+        <e p="Xam.Plugin.WebView.Droid.csproj" t="IncludeRecursive" />
+      </e>
     </e>
   </component>
 </project>

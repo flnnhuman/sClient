@@ -5,10 +5,11 @@ using Acr.UserDialogs.Infrastructure;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
-using Cookies;
+using Xam.Plugin.WebView.Droid;
 using Xamarin.Essentials;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
+
 
 namespace sc.Android
 {
@@ -22,10 +23,10 @@ namespace sc.Android
 			ToolbarResource = Resource.Layout.Toolbar;
 			UserDialogs.Init(this);
 			base.OnCreate(savedInstanceState);
+			FormsWebViewRenderer.Initialize();
 			Forms.Init(this, savedInstanceState);
-			
 			LoadApplication(new App());
-			//FormsWebViewRenderer.Initialize();
+			
 		}
 
 	}

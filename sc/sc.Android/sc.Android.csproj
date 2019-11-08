@@ -62,7 +62,6 @@
     <PackageReference Include="Xamarin.Android.Support.v7.MediaRouter" Version="28.0.0.1" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CustomWebViewRenderer.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -79,6 +78,14 @@
     <AndroidResource Include="Resources\values\colors.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Xam.Plugin.WebView.Abstractions\Xam.Plugin.WebView.Abstractions.csproj">
+      <Project>{a5a7b7fe-14f2-45ab-ac67-f6ca8243cd6c}</Project>
+      <Name>Xam.Plugin.WebView.Abstractions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Xam.Plugin.WebView.Droid\Xam.Plugin.WebView.Droid.csproj">
+      <Project>{a4818671-56ab-449f-9bb0-8931c8f5daf7}</Project>
+      <Name>Xam.Plugin.WebView.Droid</Name>
+    </ProjectReference>
     <ProjectReference Include="..\sc\sc.csproj">
       <Project>{A6E858B3-C5B0-4031-813B-4FA66F1B44C8}</Project>
       <Name>sc</Name>
