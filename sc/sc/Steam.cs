@@ -1,18 +1,22 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Acr.UserDialogs;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using SteamKit2;
 using Xamarin.Essentials;
 using Xamarin.Forms;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace sc {
+	[SuppressMessage("ReSharper", "UnusedMember.Global")] 
 	internal enum EUserInputType : byte {
 		Unknown,
 		DeviceID,
@@ -398,13 +402,7 @@ namespace sc {
 				// If we're not using login keys, ensure we don't have any saved
 				BotDatabase.LoginKey = null;
 			}
-
-			// if (!await InitLoginAndPassword(string.IsNullOrEmpty(loginKey)).ConfigureAwait(false))
-			// {
-			//     Stop();
-			// не нужно
-			//     return;
-			// }
+			
 
 			// Steam login and password fields can contain ASCII characters only, including spaces
 			const string nonAsciiPattern = @"[^\u0000-\u007F]+";
@@ -414,8 +412,7 @@ namespace sc {
 			string password = Regex.Replace(mainPage.Password, nonAsciiPattern, "", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
 			Logger.LogGenericInfo(Strings.BotLoggingIn);
-
-			TwoFactorCode = mainPage.TwoFactorCode;
+			//TwoFactorCode = mainPage.TwoFactorCode;
 			
 			//  if (string.IsNullOrEmpty(TwoFactorCode) && HasMobileAuthenticator
 			//  ) // We should always include 2FA token, even if it's not required
@@ -560,19 +557,24 @@ namespace sc {
 
 					break;
 				case EResult.AccountLoginDeniedNeedTwoFactor:
-					string twoFactorCode = null;
-					//if (!HasMobileAuthenticator) {
-					//	string twoFactorCode = await Logging.GetUserInput(ASF.EUserInputType.TwoFactorAuthentication, BotName).ConfigureAwait(false);
-					//
 					
-						if (string.IsNullOrEmpty(twoFactorCode)) {
-							Stop();
+					PromptResult pResult = await UserDialogs.Instance.PromptAsync(new PromptConfig
+					{
+						InputType = InputType.Name,
+						OkText = "Enter",
+						Title = "Enter your guard code",
+						IsCancellable = false,
+						MaxLength = 5
+					});
+					if (pResult.Ok && !string.IsNullOrWhiteSpace(pResult.Text))
+					{
+						TwoFactorCode = pResult.Text;
+					}
 					
-							break;
-						}
-					//
-					//	SetUserInput(ASF.EUserInputType.TwoFactorAuthentication, twoFactorCode);
-					//}
+					if (string.IsNullOrEmpty(TwoFactorCode)) {
+						
+						Stop();
+					}
 
 					break;
 				case EResult.OK:
@@ -751,7 +753,7 @@ namespace sc {
 				fileSize = fileStream.Length;
 				fileStream.Seek(0, SeekOrigin.Begin);
 
-				SHA1CryptoServiceProvider sha = new SHA1CryptoServiceProvider();
+				var sha = new SHA1CryptoServiceProvider();
 
 				sentryHash = sha.ComputeHash(fileStream);
 			} catch (Exception e) {
@@ -783,8 +785,9 @@ namespace sc {
 		}
 
 
-		public static async Task<string> ReadAllTextAsync([NotNull] string path) => File.ReadAllText(path);
+		public static string ReadAllTextAsync([NotNull] string path) => File.ReadAllText(path);
 
+		// ReSharper disable once MemberCanBePrivate.Global
 		internal async Task<bool> RefreshSession() {
 			if (!IsConnectedAndLoggedOn) {
 				return false;
@@ -816,6 +819,7 @@ namespace sc {
 			return false;
 		}
 
+		// ReSharper disable once MemberCanBePrivate.Global
 		internal void RequestPersonaStateUpdate() {
 			if (!IsConnectedAndLoggedOn) {
 				return;
@@ -829,51 +833,7 @@ namespace sc {
 			StopPlayingWasBlockedTimer();
 		}
 
-		internal void SetUserInput(EUserInputType inputType, string inputValue) {
-			if ((inputType == EUserInputType.Unknown) || string.IsNullOrEmpty(inputValue)) {
-				Logger.LogNullError(nameof(inputType) + " || " + nameof(inputValue));
-			}
-
-			// This switch should cover ONLY bot properties
-			switch (inputType) {
-				case EUserInputType.DeviceID:
-					DeviceID = inputValue;
-
-					break;
-				case EUserInputType.Login:
-					if (BotConfig != null) {
-						BotConfig.SteamLogin = inputValue;
-					}
-
-					break;
-				case EUserInputType.Password:
-					if (BotConfig != null) {
-						BotConfig.DecryptedSteamPassword = inputValue;
-					}
-
-					break;
-				case EUserInputType.SteamGuard:
-					AuthCode = inputValue;
-
-					break;
-				case EUserInputType.SteamParentalCode:
-					if (BotConfig != null) {
-						BotConfig.SteamParentalCode = inputValue;
-					}
-
-					break;
-				case EUserInputType.TwoFactorAuthentication:
-					TwoFactorCode = inputValue;
-
-					break;
-				default:
-					Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(inputType), inputType));
-
-					break;
-			}
-		}
-
-			internal static async Task RegisterBot(string botName) {
+		private static async Task RegisterBot(string botName) {
 			if (string.IsNullOrEmpty(botName)) {
 				sc.Logger.LogNullError(nameof(botName));
 
@@ -893,7 +853,7 @@ namespace sc {
 			}
 
 			//BotConfig botConfig = await BotConfig.Load(configFilePath).ConfigureAwait(false);
-			BotConfig botConfig = BotConfig.CreateOrLoad(configFilePath);
+			var botConfig = BotConfig.CreateOrLoad(configFilePath);
 			if (botConfig == null) {
 				sc.Logger.LogGenericError(string.Format(Strings.ErrorBotConfigInvalid, configFilePath));
 
@@ -973,8 +933,8 @@ namespace sc {
 				//SteamSaleEvent?.Dispose();
 				//Trading?.Dispose();
 			}
-	
-		internal async Task Start() {
+
+			private async Task Start() {
 			if (KeepRunning) {
 				return;
 			}
@@ -988,7 +948,7 @@ namespace sc {
 			//	        string mobileAuthenticatorFilePath = GetFilePath(EFileType.MobileAuthenticator);
 
 			//	        if (string.IsNullOrEmpty(mobileAuthenticatorFilePath)) {
-			//		        ArchiLogger.LogNullError(nameof(mobileAuthenticatorFilePath));
+			//		        Logger.LogNullError(nameof(mobileAuthenticatorFilePath));
 
 			//		        return;
 			//	        }
@@ -1001,7 +961,7 @@ namespace sc {
 			//      string keysToRedeemFilePath = GetFilePath(EFileType.KeysToRedeem);
 
 			//      if (string.IsNullOrEmpty(keysToRedeemFilePath)) {
-			//	        ArchiLogger.LogNullError(nameof(keysToRedeemFilePath));
+			//	        Logger.LogNullError(nameof(keysToRedeemFilePath));
 
 			//	        return;
 			//      }
@@ -1013,7 +973,7 @@ namespace sc {
 			await Connect().ConfigureAwait(false);
 		}
 
-		internal void Stop(bool skipShutdownEvent = false) {
+			private void Stop(bool skipShutdownEvent = false) {
 			if (!KeepRunning) {
 				return;
 			}

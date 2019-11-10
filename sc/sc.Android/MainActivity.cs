@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Net;
+using System.Threading.Tasks;
 using Acr.UserDialogs;
 using Acr.UserDialogs.Infrastructure;
 using Android.App;
 using Android.Content.PM;
+using Android.Content.Res;
 using Android.OS;
+using Plugin.CurrentActivity;
+using sc.Android;
 using Xam.Plugin.WebView.Droid;
 using Xamarin.Essentials;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
+
 
 
 namespace sc.Android
@@ -30,4 +35,5 @@ namespace sc.Android
 		}
 
 	}
+	
 }

@@ -27,8 +27,7 @@ namespace sc {
 
 		public string Login => LoginField.Text;
 		public string Password => PasswordField.Text;
-		public string TwoFactorCode => TwoFactorCodeField.Text;
-
+		
 		private async void Button_OnClicked(object sender, EventArgs e) {
 			ThreadPool.QueueUserWorkItem(o => {
 				sc.InitializeGlobalConfigAndDatabase();
