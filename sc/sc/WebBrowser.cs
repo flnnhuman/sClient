@@ -11,7 +11,7 @@ namespace sc {
 			None = 0,
 			ReturnClientErrors = 1
 		}
-
+		public List<MyCookie> Cookies = new List<MyCookie>();
 		private const byte ExtendedTimeoutMultiplier = 10; // Defines multiplier of timeout for WebBrowsers dealing with huge data (ASF update)
 
 		public const byte MaxTries = 5;
@@ -231,6 +231,17 @@ namespace sc {
 				FinalUri = basicResponse.FinalUri;
 				StatusCode = basicResponse.StatusCode;
 			}
+		}
+	}
+	public class MyCookie
+	{
+		public string Value;
+		public string Name;
+
+		public MyCookie(string value, string name)
+		{
+			Value = value;
+			Name = name;
 		}
 	}
 }

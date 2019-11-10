@@ -203,6 +203,10 @@ namespace sc {
 			WebBrowser.CookieContainer.Add(new Cookie("timezoneOffset", timeZoneOffset, "/", "." + SteamHelpHost));
 			WebBrowser.CookieContainer.Add(new Cookie("timezoneOffset", timeZoneOffset, "/", "." + SteamStoreHost));
 
+			WebBrowser.Cookies.Add(new MyCookie(sessionID,"sessionid"));
+			WebBrowser.Cookies.Add(new MyCookie(steamLogin,"steamLogin"));
+			WebBrowser.Cookies.Add(new MyCookie(steamLoginSecure,"steamLoginSecure"));
+			WebBrowser.Cookies.Add(new MyCookie(timeZoneOffset,"timezoneOffset"));
 			Logger.LogGenericInfo(Strings.Success);
 
 			// Unlock Steam Parental if needed
