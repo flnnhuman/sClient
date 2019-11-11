@@ -12,7 +12,7 @@ namespace sc {
 		public App() {
 			InitializeComponent();
 			MainPage = new MainPage();
-			//MainPage = new NavigationPage(new second_page());
+			MainPage = new NavigationPage(new second_page());
 			if (!Directory.Exists(Path.Combine(Bot.MainDir,"config")))
 			{
 				Directory.CreateDirectory(Path.Combine(Bot.MainDir, "config"));
@@ -22,7 +22,7 @@ namespace sc {
 		protected override async void OnResume()
 		{
 			base.OnResume();
-			MyTheme theme = await DependencyService.Get<IEnvironment>().GetOperatingSystemTheme();
+			Theme theme = await DependencyService.Get<IEnvironment>().GetOperatingSystemTheme();
 			SetTheme(theme);
 		}
 
@@ -33,10 +33,10 @@ namespace sc {
 		protected override async void OnStart()
 		{
 			base.OnStart();
-			MyTheme theme = await DependencyService.Get<IEnvironment>().GetOperatingSystemTheme();
+			Theme theme = await DependencyService.Get<IEnvironment>().GetOperatingSystemTheme();
 			SetTheme(theme);
 		}
-		void SetTheme(MyTheme theme)
+		void SetTheme(Theme theme)
 		{ 
 			CrossToastPopUp.Current.ShowToastMessage(theme.ToString());
 			

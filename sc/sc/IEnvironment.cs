@@ -4,8 +4,8 @@ namespace sc
 {
     public interface IEnvironment
     {
-        Task<MyTheme> GetOperatingSystemTheme();
+        Task<Theme> GetOperatingSystemTheme();
     }
 
-    public enum MyTheme { Light, Dark }
+    public enum Theme { Light, Dark }
 }

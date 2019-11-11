@@ -14,7 +14,7 @@ namespace sc.Android
 {
     public class Environment_Android : IEnvironment
     {
-        public Task<MyTheme> GetOperatingSystemTheme()
+        public Task<Theme> GetOperatingSystemTheme()
         {
             //Ensure the device is running Android Froyo or higher because UIMode was added in Android Froyo, API 8.0
             if(Build.VERSION.SdkInt >= BuildVersionCodes.Froyo)
@@ -24,10 +24,10 @@ namespace sc.Android
                 switch(uiModeFlags)
                 {
                     case UiMode.NightYes:
-                        return Task.FromResult(MyTheme.Dark);
+                        return Task.FromResult(Theme.Dark);
 
                     case UiMode.NightNo:
-                        return Task.FromResult(MyTheme.Light);
+                        return Task.FromResult(Theme.Light);
 
                     default:
                         throw new NotSupportedException($"UiMode {uiModeFlags} not supported");
@@ -35,7 +35,7 @@ namespace sc.Android
             }
             else
             {
-                return Task.FromResult(MyTheme.Light);
+                return Task.FromResult(Theme.Light);
             }
         }
     }
