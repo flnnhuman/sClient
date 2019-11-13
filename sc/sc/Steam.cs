@@ -456,14 +456,12 @@ namespace sc {
 			OwnedPackageIDs.Clear();
 
 			//Actions.OnDisconnected();
-			//ArchiWebHandler.OnDisconnected();
+			//WebHandler.OnDisconnected();
 			//CardsFarmer.OnDisconnected(); 
 			//Trading.OnDisconnected();
 
 			FirstTradeSent = false;
-
-			//	await PluginsCore.OnBotDisconnected(this, callback.UserInitiated ? EResult.OK : lastLogOnResult).ConfigureAwait(false);
-
+			
 			// If we initiated disconnect, do not attempt to reconnect
 			if (callback.UserInitiated && !ReconnectOnUserInitiated) {
 				return;
@@ -541,23 +539,39 @@ namespace sc {
 
 					break;
 				case EResult.AccountLogonDenied:
+
+					string authCode=null; 
 					
-					//var authCode = await Logging.GetUserInput(sc.EUserInputType.SteamGuard, BotName)
-					//    .ConfigureAwait(false);
-					string authCode = null ;
+					PromptResult aResult = await UserDialogs.Instance.PromptAsync(new PromptConfig
+					{
+						InputType = InputType.Name,
+						OkText = "Enter",
+						Title = "Enter your guard code",
+						IsCancellable = false,
+						MaxLength = 5
+					}).ConfigureAwait(false);
+					if (aResult.Ok && !string.IsNullOrWhiteSpace(aResult.Text))
+					{
+						authCode = aResult.Text;
+					}
+					else
+					{
+						Stop();	
+						break;
+					}
 					if (string.IsNullOrEmpty(authCode))
 					{
 					    Stop();
-
 					    break;
+					    
 					}
 
-					//SetUserInput(EUserInputType.SteamGuard, authCode);
-					
+					AuthCode = authCode;
 
 					break;
 				case EResult.AccountLoginDeniedNeedTwoFactor:
 					
+					string twoFactorCode=null; 
 					PromptResult pResult = await UserDialogs.Instance.PromptAsync(new PromptConfig
 					{
 						InputType = InputType.Name,
@@ -565,17 +579,23 @@ namespace sc {
 						Title = "Enter your guard code",
 						IsCancellable = false,
 						MaxLength = 5
-					});
+					}).ConfigureAwait(false);
 					if (pResult.Ok && !string.IsNullOrWhiteSpace(pResult.Text))
 					{
-						TwoFactorCode = pResult.Text;
+						twoFactorCode = pResult.Text;
+					}
+					else
+					{
+						Stop();	
+						break;
 					}
 					
-					if (string.IsNullOrEmpty(TwoFactorCode)) {
-						
+					if (string.IsNullOrEmpty(twoFactorCode)) {
 						Stop();
+						break;
 					}
 
+					TwoFactorCode = twoFactorCode;
 					break;
 				case EResult.OK:
 					AccountFlags = callback.AccountFlags;

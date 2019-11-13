@@ -12,7 +12,7 @@ namespace sc {
 		public App() {
 			InitializeComponent();
 			MainPage = new MainPage();
-			MainPage = new NavigationPage(new second_page());
+			//MainPage = new NavigationPage(new second_page());
 			if (!Directory.Exists(Path.Combine(Bot.MainDir,"config")))
 			{
 				Directory.CreateDirectory(Path.Combine(Bot.MainDir, "config"));
