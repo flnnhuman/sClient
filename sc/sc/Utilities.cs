@@ -30,6 +30,16 @@ namespace sc {
 			return cookies.Count > 0 ? (from Cookie cookie in cookies where cookie.Name.Equals(name) select cookie.Value).FirstOrDefault() : null;
 		}
 
+		public static bool IsValidHexadecimalText(string text) {
+			if (string.IsNullOrEmpty(text)) {
+				sc.Logger.LogNullError(nameof(text));
+
+				return false;
+			}
+
+			return (text.Length % 2 == 0) && text.All(Uri.IsHexDigit);
+		}
+
 		public static void InBackground(Action action, bool longRunning = false) {
 			if (action == null) {
 				sc.Logger.LogNullError(nameof(action));

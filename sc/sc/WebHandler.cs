@@ -6,6 +6,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
+using JetBrains.Annotations;
 using sc.Helpers;
 using SteamKit2;
 
@@ -63,6 +65,7 @@ namespace sc {
 					}
 				}.ToImmutableDictionary(StringComparer.Ordinal);
 
+		private readonly SemaphoreSlim SessionSemaphore = new SemaphoreSlim(1, 1);
 		private readonly Bot Bot;
 		public readonly ArchiCacheable<string> CachedApiKey;
 		private bool Initialized;
@@ -70,8 +73,9 @@ namespace sc {
 		private DateTime LastSessionRefresh;
 		private string VanityURL;
 
-		public WebHandler(Bot bot)
+		public WebHandler([NotNull]Bot bot)
 		{
+			CachedApiKey = new ArchiCacheable<string>(ResolveApiKey);
 			Bot = bot ?? throw new ArgumentNullException(nameof(bot));
 			WebBrowser = new WebBrowser(bot.Logger);
 			
@@ -106,6 +110,7 @@ namespace sc {
 
 			return success ? !string.IsNullOrEmpty(steamApiKey) : (bool?) null;
 		}
+		internal HttpClient GenerateDisposableHttpClient() => WebBrowser.GenerateDisposableHttpClient();
 
 		internal async Task<bool> Init(ulong steamID, EUniverse universe, string webAPIUserNonce, string parentalCode = null) {
 			if ((steamID == 0) || !new SteamID(steamID).IsIndividualAccount || (universe == EUniverse.Invalid) || !Enum.IsDefined(typeof(EUniverse), universe) || string.IsNullOrEmpty(webAPIUserNonce)) {
@@ -327,6 +332,11 @@ namespace sc {
 
 			return true;
 		}
+		internal void OnDisconnected() {
+			Initialized = false;
+			Utilities.InBackground(CachedApiKey.Reset);
+			// TODO Utilities.InBackground(CachedPublicInventory.Reset);
+		}
 
 		public static async Task<T> WebLimitRequest<T>(string service, Func<Task<T>> function) {
 			if (string.IsNullOrEmpty(service) || (function == null)) {
@@ -367,6 +377,414 @@ namespace sc {
 				// We release open connections semaphore only once we're indeed done sending a particular request
 				limiters.OpenConnectionsSemaphore.Release();
 			}
+		}
+		private async Task<bool> RegisterApiKey() {
+			const string request = "/dev/registerkey";
+
+			// Extra entry for sessionID
+			Dictionary<string, string> data = new Dictionary<string, string>(4, StringComparer.Ordinal) {
+				{ "agreeToTerms", "agreed" },
+				{ "domain", "localhost" },
+				{ "Submit", "Register" }
+			};
+
+			return await UrlPostWithSession(SteamCommunityURL, request, data).ConfigureAwait(false);
+		}
+
+			public async Task<bool> UrlPostWithSession(string host, string request, Dictionary<string, string> data = null, string referer = null, ESession session = ESession.Lowercase, bool checkSessionPreemptively = true, byte maxTries = WebBrowser.MaxTries) {
+			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(request) || !Enum.IsDefined(typeof(ESession), session)) {
+				Bot.Logger.LogNullError(nameof(host) + " || " + nameof(request) + " || " + nameof(session));
+
+				return false;
+			}
+
+			if (maxTries == 0) {
+				Bot.Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, WebBrowser.MaxTries));
+				Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+				return false;
+			}
+
+			if (checkSessionPreemptively) {
+				// Check session preemptively as this request might not get redirected to expiration
+				bool? sessionExpired = await IsSessionExpired().ConfigureAwait(false);
+
+				if (sessionExpired.GetValueOrDefault(true)) {
+					if (await RefreshSession().ConfigureAwait(false)) {
+						return await UrlPostWithSession(host, request, data, referer, session, true, --maxTries).ConfigureAwait(false);
+					}
+
+					Bot.Logger.LogGenericWarning(Strings.WarningFailed);
+					Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+					return false;
+				}
+			} else {
+				// If session refresh is already in progress, just wait for it
+				await SessionSemaphore.WaitAsync().ConfigureAwait(false);
+				SessionSemaphore.Release();
+			}
+
+			if (!Initialized) {
+				for (byte i = 0; (i < sc.GlobalConfig.ConnectionTimeout) && !Initialized && Bot.IsConnectedAndLoggedOn; i++) {
+					await Task.Delay(1000).ConfigureAwait(false);
+				}
+
+				if (!Initialized) {
+					Bot.Logger.LogGenericWarning(Strings.WarningFailed);
+					Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+					return false;
+				}
+			}
+
+			if (session != ESession.None) {
+				string sessionID = WebBrowser.CookieContainer.GetCookieValue(host, "sessionid");
+
+				if (string.IsNullOrEmpty(sessionID)) {
+					Bot.Logger.LogNullError(nameof(sessionID));
+
+					return false;
+				}
+
+				string sessionName;
+
+				switch (session) {
+					case ESession.CamelCase:
+						sessionName = "sessionID";
+
+						break;
+					case ESession.Lowercase:
+						sessionName = "sessionid";
+
+						break;
+					case ESession.PascalCase:
+						sessionName = "SessionID";
+
+						break;
+					default:
+						Bot.Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(session), session));
+
+						return false;
+				}
+
+				if (data != null) {
+					data[sessionName] = sessionID;
+				} else {
+					data = new Dictionary<string, string>(1, StringComparer.Ordinal) { { sessionName, sessionID } };
+				}
+			}
+
+			WebBrowser.BasicResponse response = await WebLimitRequest(host, async () => await WebBrowser.UrlPost(host + request, data, referer).ConfigureAwait(false)).ConfigureAwait(false);
+
+			if (response == null) {
+				return false;
+			}
+
+			if (IsSessionExpiredUri(response.FinalUri)) {
+				if (await RefreshSession().ConfigureAwait(false)) {
+					return await UrlPostWithSession(host, request, data, referer, session, checkSessionPreemptively, --maxTries).ConfigureAwait(false);
+				}
+
+				Bot.Logger.LogGenericWarning(Strings.WarningFailed);
+				Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+				return false;
+			}
+
+			// Under special brain-damaged circumstances, Steam might just return our own profile as a response to the request, for absolutely no reason whatsoever - just try again in this case
+			if (await IsProfileUri(response.FinalUri).ConfigureAwait(false)) {
+				Bot.Logger.LogGenericDebug(string.Format(Strings.WarningWorkaroundTriggered, nameof(IsProfileUri)));
+
+				return await UrlPostWithSession(host, request, data, referer, session, checkSessionPreemptively, --maxTries).ConfigureAwait(false);
+			}
+
+			return true;
+		}
+
+		private async Task<(bool Success, string Result)> ResolveApiKey() {
+			if (Bot.IsAccountLimited) {
+				// API key is permanently unavailable for limited accounts
+				return (true, null);
+			}
+
+			(ESteamApiKeyState State, string Key) result = await GetApiKeyState().ConfigureAwait(false);
+
+			switch (result.State) {
+				case ESteamApiKeyState.AccessDenied:
+					// We succeeded in fetching API key, but it resulted in access denied
+					// Return empty result, API key is unavailable permanently
+					return (true, "");
+				case ESteamApiKeyState.NotRegisteredYet:
+					// We succeeded in fetching API key, and it resulted in no key registered yet
+					// Let's try to register a new key
+					if (!await RegisterApiKey().ConfigureAwait(false)) {
+						// Request timed out, bad luck, we'll try again later
+						goto case ESteamApiKeyState.Timeout;
+					}
+
+					// We should have the key ready, so let's fetch it again
+					result = await GetApiKeyState().ConfigureAwait(false);
+
+					if (result.State == ESteamApiKeyState.Timeout) {
+						// Request timed out, bad luck, we'll try again later
+						goto case ESteamApiKeyState.Timeout;
+					}
+
+					if (result.State != ESteamApiKeyState.Registered) {
+						// Something went wrong, report error
+						goto default;
+					}
+
+					goto case ESteamApiKeyState.Registered;
+				case ESteamApiKeyState.Registered:
+					// We succeeded in fetching API key, and it resulted in registered key
+					// Cache the result, this is the API key we want
+					return (true, result.Key);
+				case ESteamApiKeyState.Timeout:
+					// Request timed out, bad luck, we'll try again later
+					return (false, null);
+				default:
+					// We got an unhandled error, this should never happen
+					Bot.Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(result.State), result.State));
+
+					return (false, null);
+			}
+		}
+			public async Task<HtmlDocument> UrlGetToHtmlDocumentWithSession(string host, string request, bool checkSessionPreemptively = true, byte maxTries = WebBrowser.MaxTries) {
+			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(request)) {
+				Bot.Logger.LogNullError(nameof(host) + " || " + nameof(request));
+
+				return null;
+			}
+
+			if (maxTries == 0) {
+				Bot.Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, WebBrowser.MaxTries));
+				Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+				return null;
+			}
+
+			if (checkSessionPreemptively) {
+				// Check session preemptively as this request might not get redirected to expiration
+				bool? sessionExpired = await IsSessionExpired().ConfigureAwait(false);
+
+				if (sessionExpired.GetValueOrDefault(true)) {
+					if (await RefreshSession().ConfigureAwait(false)) {
+						return await UrlGetToHtmlDocumentWithSession(host, request, true, --maxTries).ConfigureAwait(false);
+					}
+
+					Bot.Logger.LogGenericWarning(Strings.WarningFailed);
+					Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+					return null;
+				}
+			} else {
+				// If session refresh is already in progress, just wait for it
+				await SessionSemaphore.WaitAsync().ConfigureAwait(false);
+				SessionSemaphore.Release();
+			}
+
+			if (!Initialized) {
+				for (byte i = 0; (i < sc.GlobalConfig.ConnectionTimeout) && !Initialized && Bot.IsConnectedAndLoggedOn; i++) {
+					await Task.Delay(1000).ConfigureAwait(false);
+				}
+
+				if (!Initialized) {
+					Bot.Logger.LogGenericWarning(Strings.WarningFailed);
+					Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+					return null;
+				}
+			}
+
+			WebBrowser.HtmlDocumentResponse response = await WebLimitRequest(host, async () => await WebBrowser.UrlGetToHtmlDocument(host + request).ConfigureAwait(false)).ConfigureAwait(false);
+
+			if (response == null) {
+				return null;
+			}
+
+			if (IsSessionExpiredUri(response.FinalUri)) {
+				if (await RefreshSession().ConfigureAwait(false)) {
+					return await UrlGetToHtmlDocumentWithSession(host, request, checkSessionPreemptively, --maxTries).ConfigureAwait(false);
+				}
+
+				Bot.Logger.LogGenericWarning(Strings.WarningFailed);
+				Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+				return null;
+			}
+
+			// Under special brain-damaged circumstances, Steam might just return our own profile as a response to the request, for absolutely no reason whatsoever - just try again in this case
+			if (await IsProfileUri(response.FinalUri).ConfigureAwait(false)) {
+				Bot.Logger.LogGenericDebug(string.Format(Strings.WarningWorkaroundTriggered, nameof(IsProfileUri)));
+
+				return await UrlGetToHtmlDocumentWithSession(host, request, checkSessionPreemptively, --maxTries).ConfigureAwait(false);
+			}
+
+			return response.Content;
+		}
+			private async Task<bool> RefreshSession() {
+				if (!Bot.IsConnectedAndLoggedOn) {
+					return false;
+				}
+
+				DateTime triggeredAt = DateTime.UtcNow;
+
+				if (triggeredAt < LastSessionRefresh.AddSeconds(MinSessionValidityInSeconds)) {
+					return true;
+				}
+
+				await SessionSemaphore.WaitAsync().ConfigureAwait(false);
+
+				try {
+					if (triggeredAt < LastSessionRefresh.AddSeconds(MinSessionValidityInSeconds)) {
+						return true;
+					}
+
+					if (!Bot.IsConnectedAndLoggedOn) {
+						return false;
+					}
+
+					Bot.Logger.LogGenericInfo(Strings.RefreshingOurSession);
+					bool result = await Bot.RefreshSession().ConfigureAwait(false);
+
+					if (result) {
+						LastSessionCheck = LastSessionRefresh = DateTime.UtcNow;
+					}
+
+					return result;
+				} finally {
+					SessionSemaphore.Release();
+				}
+			}
+
+	private async Task<bool?> IsSessionExpired() {
+			if (DateTime.UtcNow < LastSessionCheck.AddSeconds(MinSessionValidityInSeconds)) {
+				return LastSessionCheck != LastSessionRefresh;
+			}
+
+			await SessionSemaphore.WaitAsync().ConfigureAwait(false);
+
+			try {
+				if (DateTime.UtcNow < LastSessionCheck.AddSeconds(MinSessionValidityInSeconds)) {
+					return LastSessionCheck != LastSessionRefresh;
+				}
+
+				// Choosing proper URL to check against is actually much harder than it initially looks like, we must abide by several rules to make this function as lightweight and reliable as possible
+				// We should prefer to use Steam store, as the community is much more unstable and broken, plus majority of our requests get there anyway, so load-balancing with store makes much more sense. It also has a higher priority than the community, so all eventual issues should be fixed there first
+				// The URL must be fast enough to render, as this function will be called reasonably often, and every extra delay adds up. We're already making our best effort by using HEAD request, but the URL itself plays a very important role as well
+				// The page should have as little internal dependencies as possible, since every extra chunk increases likelihood of broken functionality. We can only make a guess here based on the amount of content that the page returns to us
+				// It should also be URL with fairly fixed address that isn't going to disappear anytime soon, preferably something staple that is a dependency of other requests, so it's very unlikely to change in a way that would add overhead in the future
+				// Lastly, it should be a request that is preferably generic enough as a routine check, not something specialized and targetted, to make it very clear that we're just checking if session is up, and to further aid internal dependencies specified above by rendering as general Steam info as possible
+
+				const string host = SteamStoreURL;
+				const string request = "/account";
+
+				WebBrowser.BasicResponse response = await WebLimitRequest(host, async () => await WebBrowser.UrlHead(host + request).ConfigureAwait(false)).ConfigureAwait(false);
+
+				if (response?.FinalUri == null) {
+					return null;
+				}
+
+				bool result = IsSessionExpiredUri(response.FinalUri);
+
+				DateTime now = DateTime.UtcNow;
+
+				if (!result) {
+					LastSessionRefresh = now;
+				}
+
+				LastSessionCheck = now;
+
+				return result;
+			} finally {
+				SessionSemaphore.Release();
+			}
+		}
+
+			
+		private async Task<(ESteamApiKeyState State, string Key)> GetApiKeyState() {
+			const string request = "/dev/apikey?l=english";
+			HtmlDocument htmlDocument = await UrlGetToHtmlDocumentWithSession(SteamCommunityURL, request).ConfigureAwait(false);
+
+			HtmlNode titleNode = htmlDocument?.DocumentNode.SelectSingleNode("//div[@id='mainContents']/h2");
+
+			if (titleNode == null) {
+				return (ESteamApiKeyState.Timeout, null);
+			}
+
+			string title = titleNode.InnerText;
+
+			if (string.IsNullOrEmpty(title)) {
+				Bot.Logger.LogNullError(nameof(title));
+
+				return (ESteamApiKeyState.Error, null);
+			}
+
+			if (title.Contains("Access Denied") || title.Contains("Validated email address required")) {
+				return (ESteamApiKeyState.AccessDenied, null);
+			}
+
+			HtmlNode htmlNode = htmlDocument.DocumentNode.SelectSingleNode("//div[@id='bodyContents_ex']/p");
+
+			if (htmlNode == null) {
+				Bot.Logger.LogNullError(nameof(htmlNode));
+
+				return (ESteamApiKeyState.Error, null);
+			}
+
+			string text = htmlNode.InnerText;
+
+			if (string.IsNullOrEmpty(text)) {
+				Bot.Logger.LogNullError(nameof(text));
+
+				return (ESteamApiKeyState.Error, null);
+			}
+
+			if (text.Contains("Registering for a Steam Web API Key")) {
+				return (ESteamApiKeyState.NotRegisteredYet, null);
+			}
+
+			int keyIndex = text.IndexOf("Key: ", StringComparison.Ordinal);
+
+			if (keyIndex < 0) {
+				Bot.Logger.LogNullError(nameof(keyIndex));
+
+				return (ESteamApiKeyState.Error, null);
+			}
+
+			keyIndex += 5;
+
+			if (text.Length <= keyIndex) {
+				Bot.Logger.LogNullError(nameof(text));
+
+				return (ESteamApiKeyState.Error, null);
+			}
+
+			text = text.Substring(keyIndex);
+
+			if ((text.Length != 32) || !Utilities.IsValidHexadecimalText(text)) {
+				Bot.Logger.LogNullError(nameof(text));
+
+				return (ESteamApiKeyState.Error, null);
+			}
+
+			return (ESteamApiKeyState.Registered, text);
+		}
+
+		private enum ESteamApiKeyState : byte {
+			Error,
+			Timeout,
+			Registered,
+			NotRegisteredYet,
+			AccessDenied
+		}
+		public enum ESession : byte {
+			None,
+			Lowercase,
+			CamelCase,
+			PascalCase
 		}
 	}
 }

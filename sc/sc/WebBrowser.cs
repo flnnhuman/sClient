@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using JetBrains.Annotations;
 
 namespace sc {
@@ -16,6 +17,8 @@ namespace sc {
 
 		public const byte MaxTries = 5;
 		internal const byte MaxConnections = 5;
+		private const byte MaxIdleTime = 15; // Defines in seconds, how long socket is allowed to stay in CLOSE_WAIT state after there are no connections to it
+
 
 		public readonly CookieContainer CookieContainer = new CookieContainer();
 		private readonly HttpClient HttpClient;
@@ -68,6 +71,64 @@ namespace sc {
 			HttpClient.Dispose();
 			HttpClientHandler.Dispose();
 		}
+
+		[ItemCanBeNull]
+		[PublicAPI]
+		public async Task<HtmlDocumentResponse> UrlGetToHtmlDocument(string request, string referer = null, ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries) {
+			if (string.IsNullOrEmpty(request) || (maxTries == 0)) {
+				Logger.LogNullError(nameof(request) + " || " + nameof(maxTries));
+
+				return null;
+			}
+
+			StringResponse response = await UrlGetToString(request, referer, requestOptions, maxTries).ConfigureAwait(false);
+
+			return response != null ? new HtmlDocumentResponse(response) : null;
+		}
+		internal async Task<StringResponse> UrlGetToString(string request, string referer = null, ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries) {
+			if (string.IsNullOrEmpty(request) || (maxTries == 0)) {
+				Logger.LogNullError(nameof(request) + " || " + nameof(maxTries));
+
+				return null;
+			}
+
+			StringResponse result = null;
+
+			for (byte i = 0; i < maxTries; i++) {
+				using HttpResponseMessage response = await InternalGet(request, referer).ConfigureAwait(false);
+
+				if (response == null) {
+					continue;
+				}
+
+				if (response.StatusCode.IsClientErrorCode()) {
+					if (requestOptions.HasFlag(ERequestOptions.ReturnClientErrors)) {
+						result = new StringResponse(response);
+					}
+
+					break;
+				}
+
+				return new StringResponse(response, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+			}
+
+			if (maxTries > 1) {
+				Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, maxTries));
+				Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, request));
+			}
+
+			return result;
+		}
+		private async Task<HttpResponseMessage> InternalGet(string request, string referer = null, HttpCompletionOption httpCompletionOptions = HttpCompletionOption.ResponseContentRead) {
+			if (string.IsNullOrEmpty(request)) {
+				Logger.LogNullError(nameof(request));
+
+				return null;
+			}
+
+			return await InternalRequest(new Uri(request), HttpMethod.Get, null, referer, httpCompletionOptions).ConfigureAwait(false);
+		}
+
 
 		private async Task<HttpResponseMessage> InternalPost(string request, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null) {
 			if (string.IsNullOrEmpty(request)) {
@@ -243,6 +304,90 @@ namespace sc {
 				StatusCode = basicResponse.StatusCode;
 			}
 		}
+		internal static HtmlDocument StringToHtmlDocument(string html) {
+			if (html == null) {
+				sc.Logger.LogNullError(nameof(html));
+
+				return null;
+			}
+
+			HtmlDocument htmlDocument = new HtmlDocument();
+			htmlDocument.LoadHtml(html);
+
+			return htmlDocument;
+		}
+
+		public async Task<BasicResponse> UrlHead(string request, string referer = null, ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries) {
+			if (string.IsNullOrEmpty(request) || (maxTries == 0)) {
+				Logger.LogNullError(nameof(request) + " || " + nameof(maxTries));
+
+				return null;
+			}
+
+			BasicResponse result = null;
+
+			for (byte i = 0; i < maxTries; i++) {
+				using HttpResponseMessage response = await InternalHead(request, referer).ConfigureAwait(false);
+
+				if (response == null) {
+					continue;
+				}
+
+				if (response.StatusCode.IsClientErrorCode()) {
+					if (requestOptions.HasFlag(ERequestOptions.ReturnClientErrors)) {
+						result = new BasicResponse(response);
+					}
+
+					break;
+				}
+
+				return new BasicResponse(response);
+			}
+
+			if (maxTries > 1) {
+				Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, maxTries));
+				Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, request));
+			}
+
+			return result;
+		}
+		private async Task<HttpResponseMessage> InternalHead(string request, string referer = null) {
+			if (string.IsNullOrEmpty(request)) {
+				Logger.LogNullError(nameof(request));
+
+				return null;
+			}
+
+			return await InternalRequest(new Uri(request), HttpMethod.Head, null, referer).ConfigureAwait(false);
+		}
+
+		public sealed class HtmlDocumentResponse : BasicResponse {
+			[PublicAPI]
+			public readonly HtmlDocument Content;
+
+			internal HtmlDocumentResponse([NotNull] StringResponse stringResponse) : base(stringResponse) {
+				if (stringResponse == null) {
+					throw new ArgumentNullException(nameof(stringResponse));
+				}
+
+				if (!string.IsNullOrEmpty(stringResponse.Content)) {
+					Content = WebBrowser.StringToHtmlDocument(stringResponse.Content);
+				}
+			}
+		}
+		internal sealed class StringResponse : BasicResponse {
+			internal readonly string Content;
+
+			internal StringResponse([NotNull] HttpResponseMessage httpResponseMessage, [NotNull] string content) : base(httpResponseMessage) {
+				if ((httpResponseMessage == null) || (content == null)) {
+					throw new ArgumentNullException(nameof(httpResponseMessage) + " || " + nameof(content));
+				}
+
+				Content = content;
+			}
+
+			internal StringResponse([NotNull] HttpResponseMessage httpResponseMessage) : base(httpResponseMessage) { }
+		}
 	}
 	public class MyCookie
 	{
@@ -254,5 +399,31 @@ namespace sc {
 			Value = value;
 			Name = name;
 		}
+	}
+	
+	public class BasicResponse {
+		[PublicAPI]
+		public readonly HttpStatusCode StatusCode;
+
+		internal readonly Uri FinalUri;
+
+		internal BasicResponse([NotNull] HttpResponseMessage httpResponseMessage) {
+			if (httpResponseMessage == null) {
+				throw new ArgumentNullException(nameof(httpResponseMessage));
+			}
+
+			FinalUri = httpResponseMessage.Headers.Location ?? httpResponseMessage.RequestMessage.RequestUri;
+			StatusCode = httpResponseMessage.StatusCode;
+		}
+
+		internal BasicResponse([NotNull] BasicResponse basicResponse) {
+			if (basicResponse == null) {
+				throw new ArgumentNullException(nameof(basicResponse));
+			}
+
+			FinalUri = basicResponse.FinalUri;
+			StatusCode = basicResponse.StatusCode;
+		}
+	
 	}
 }
