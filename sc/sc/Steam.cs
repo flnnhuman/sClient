@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -123,8 +123,8 @@ namespace sc {
 			// Initialize
 			SteamClient = new SteamClient(SteamConfiguration);
 
-			if (Directory.Exists(MainDir)) {
-				string debugListenerPath = Path.Combine(MainDir, "debug", botName);
+			if (Debugging.IsUserDebugging && Directory.Exists(Path.Combine(MainDir,SharedInfo.DebugDirectory))) {
+				string debugListenerPath = Path.Combine(MainDir,SharedInfo.DebugDirectory, botName);
 
 				try {
 					Directory.CreateDirectory(debugListenerPath);
