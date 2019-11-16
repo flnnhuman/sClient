@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.IO;
 using Newtonsoft.Json;
+using SteamKit2;
 
 namespace sc {
 	public class GlobalConfig {
@@ -9,7 +10,9 @@ namespace sc {
 		internal const byte DefaultConnectionTimeout = 90;
 		internal const byte DefaultLoginLimiterDelay = 10;
 		private const ushort DefaultWebLimiterDelay = 300;
-
+		public ProtocolTypes SteamProtocols { get; } = DefaultSteamProtocols;
+		//private const ProtocolTypes DefaultSteamProtocols = ProtocolTypes.All;
+		private const ProtocolTypes DefaultSteamProtocols = ProtocolTypes.WebSocket;
 		[JsonProperty(Required = Required.DisallowNull)]
 		public readonly byte ConnectionTimeout = DefaultConnectionTimeout;
 
