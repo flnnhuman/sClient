@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -41,11 +41,12 @@ namespace sc {
 
 		// internal bool HasMobileAuthenticator => BotDatabase?.MobileAuthenticator != null;
 
-		private const ProtocolTypes DefaultSteamProtocols = ProtocolTypes.All;
+		
 
 		public static readonly string CacheDir = FileSystem.CacheDirectory;
 		public static readonly string MainDir = FileSystem.AppDataDirectory;
-
+		MainPage mainPage = (MainPage) Application.Current.MainPage;
+		
 		public static readonly SemaphoreSlim BotsSemaphore = new SemaphoreSlim(1, 1);
 		private static readonly SemaphoreSlim LoginRateLimitingSemaphore = new SemaphoreSlim(1, 1);
 		private static readonly SemaphoreSlim LoginSemaphore = new SemaphoreSlim(1, 1);
@@ -53,7 +54,7 @@ namespace sc {
 		public readonly string BotName;
 		private readonly CallbackManager CallbackManager;
 		private readonly SemaphoreSlim CallbackSemaphore = new SemaphoreSlim(1, 1);
-
+		private DateTime LastLogonSessionReplaced;
 		private readonly Timer HeartBeatTimer;
 
 		internal readonly ConcurrentDictionary<uint, (EPaymentMethod PaymentMethod, DateTime TimeCreated)> OwnedPackageIDs = new ConcurrentDictionary<uint, (EPaymentMethod PaymentMethod, DateTime TimeCreated)>();
@@ -111,12 +112,13 @@ namespace sc {
 
 			Logger = new Logger(botName);
 
-			// if (HasMobileAuthenticator) BotDatabase.MobileAuthenticator.Init(this);
+			/*if (HasMobileAuthenticator) {
+				BotDatabase.MobileAuthenticator.Init(this);
+			}*/
 
 			WebHandler = new WebHandler(this);
 
-			SteamConfiguration = SteamConfiguration.Create(builder => builder.WithProtocolTypes(SteamProtocols).WithCellID(sc.GlobalDatabase.CellID)
-				/*.WithHttpClientFactory(ArchiWebHandler.GenerateDisposableHttpClient)*/);
+			SteamConfiguration = SteamConfiguration.Create(builder => builder.WithProtocolTypes(sc.GlobalConfig.SteamProtocols).WithCellID(sc.GlobalDatabase.CellID).WithHttpClientFactory(WebHandler.GenerateDisposableHttpClient));
 
 			// Initialize
 			SteamClient = new SteamClient(SteamConfiguration);
@@ -151,7 +153,7 @@ namespace sc {
 			//            CallbackManager.Subscribe<SteamUnifiedMessages.ServiceMethodNotification>(OnServiceMethod);
 			//         
 			SteamUser = SteamClient.GetHandler<SteamUser>();
-			//            CallbackManager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
+			CallbackManager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
 			CallbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
 			CallbackManager.Subscribe<SteamUser.LoginKeyCallback>(OnLoginKey);
 			CallbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth);
@@ -162,11 +164,14 @@ namespace sc {
 			//CallbackManager.Subscribe<SCHandler.UserNotificationsCallback>(OnUserNotifications);
 			//CallbackManager.Subscribe<SCHandler.VanityURLChangedCallback>(OnVanityURLChangedCallback);
 
-			//Actions = new Actions(this);
-			//CardsFarmer = new CardsFarmer(this);
-			//Commands = new Commands(this);
-			//Trading = new Trading(this);
+			/*Actions = new Actions(this);
+			CardsFarmer = new CardsFarmer(this);
+			Commands = new Commands(this);
+			Trading = new Trading(this);*/
 
+			/*if (!Debugging.IsDebugBuild && ASF.GlobalConfig.Statistics) {
+				Statistics = new Statistics(this);
+			}*/
 
 			HeartBeatTimer = new Timer(async e => await HeartBeat().ConfigureAwait(false), null, TimeSpan.FromMinutes(1) + TimeSpan.FromSeconds(sc.GlobalConfig.LoginLimiterDelay /** Bots.Count*/), // Delay
 				TimeSpan.FromMinutes(1) // Period
@@ -188,7 +193,7 @@ namespace sc {
 
 		internal bool IsAccountLocked => AccountFlags.HasFlag(EAccountFlags.Lockdown);
 		public EAccountFlags AccountFlags { get; private set; }
-		public ProtocolTypes SteamProtocols { get; } = DefaultSteamProtocols;
+		
 
 
 		public bool IsConnectedAndLoggedOn => SteamClient?.SteamID != null;
@@ -277,7 +282,10 @@ namespace sc {
 				return;
 			}
 
-			ConnectionFailureTimer = new Timer(async e => await InitPermanentConnectionFailure().ConfigureAwait(false), null, TimeSpan.FromMinutes(Math.Ceiling(sc.GlobalConfig.ConnectionTimeout / 30.0)), // Delay
+			ConnectionFailureTimer = new Timer(
+				async e => await InitPermanentConnectionFailure().ConfigureAwait(false),
+				null,
+				TimeSpan.FromMinutes(Math.Ceiling(sc.GlobalConfig.ConnectionTimeout / 30.0)), // Delay
 				Timeout.InfiniteTimeSpan // Period
 			);
 		}
@@ -285,12 +293,28 @@ namespace sc {
 		public async Task InitModules() {
 			AccountFlags = EAccountFlags.NormalUser;
 			AvatarHash = Nickname = null;
-			//MasterChatGroupID = 0;
 			WalletBalance = 0;
 			WalletCurrency = ECurrencyCode.Invalid;
 
-			//CardsFarmer.SetInitialState(BotConfig.Paused);
+			/*CardsFarmer.SetInitialState(BotConfig.Paused);*/
+
+			/*if (SendItemsTimer != null) {
+				SendItemsTimer.Dispose();
+				SendItemsTimer = null;
+			}*/
+
+			/*if ((BotConfig.SendTradePeriod > 0) && BotConfig.SteamUserPermissions.Values.Any(permission => permission >= BotConfig.EPermission.Master)) {
+				SendItemsTimer = new Timer(
+					async e => await Actions.SendTradeOffer(wantedTypes: BotConfig.LootableTypes).ConfigureAwait(false),
+					null,
+					TimeSpan.FromHours(BotConfig.SendTradePeriod) + TimeSpan.FromSeconds(ASF.LoadBalancingDelay * Bots.Count), // Delay
+					TimeSpan.FromHours(BotConfig.SendTradePeriod) // Period
+				);
+			}*/
+			
+			/*await PluginsCore.OnBotInitModules(this, BotConfig.AdditionalProperties).ConfigureAwait(false);*/
 		}
+
 
 		private async Task InitPermanentConnectionFailure() {
 			if (!KeepRunning) {
@@ -344,10 +368,9 @@ namespace sc {
 			}
 		}
 
-		private async void OnConnected(SteamClient.ConnectedCallback callback) {
+		private void OnConnected(SteamClient.ConnectedCallback callback) {
 			if (callback == null) {
 				Logger.LogNullError(nameof(callback));
-
 
 				return;
 			}
@@ -358,7 +381,6 @@ namespace sc {
 
 			Logger.LogGenericInfo(Strings.BotConnected);
 
-
 			if (!KeepRunning) {
 				Logger.LogGenericInfo(Strings.BotDisconnecting);
 				Disconnect();
@@ -366,7 +388,7 @@ namespace sc {
 				return;
 			}
 
-			string sentryFilePath = Path.Combine(MainDir, "sentry");
+			string sentryFilePath = GetFilePath(EFileType.SentryFile);
 
 			if (string.IsNullOrEmpty(sentryFilePath)) {
 				Logger.LogNullError(nameof(sentryFilePath));
@@ -395,28 +417,36 @@ namespace sc {
 
 			if (BotConfig.UseLoginKeys) {
 				// Login keys are not guaranteed to be valid, we should use them only if we don't have full details available from the user
-				if (string.IsNullOrEmpty(BotConfig.SteamPassword) || (string.IsNullOrEmpty(AuthCode) && string.IsNullOrEmpty(TwoFactorCode)) /*&& !HasMobileAuthenticator*/) {
+				if (string.IsNullOrEmpty(mainPage.Password) || (string.IsNullOrEmpty(AuthCode) && string.IsNullOrEmpty(TwoFactorCode))) {
 					loginKey = BotDatabase.LoginKey;
 				}
 			} else {
 				// If we're not using login keys, ensure we don't have any saved
 				BotDatabase.LoginKey = null;
 			}
-			
+
+			/*if (!await InitLoginAndPassword(string.IsNullOrEmpty(loginKey)).ConfigureAwait(false)) {
+				Stop();
+
+				return;
+			}*/
 
 			// Steam login and password fields can contain ASCII characters only, including spaces
 			const string nonAsciiPattern = @"[^\u0000-\u007F]+";
 
-			MainPage mainPage = (MainPage) Application.Current.MainPage;
 			string username = Regex.Replace(mainPage.Login, nonAsciiPattern, "", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 			string password = Regex.Replace(mainPage.Password, nonAsciiPattern, "", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
+			if (!string.IsNullOrEmpty(password)) {
+				password = Regex.Replace(password, nonAsciiPattern, "", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+			}
+
 			Logger.LogGenericInfo(Strings.BotLoggingIn);
-			//TwoFactorCode = mainPage.TwoFactorCode;
-			
-			//  if (string.IsNullOrEmpty(TwoFactorCode) && HasMobileAuthenticator
-			//  ) // We should always include 2FA token, even if it's not required
-			//      TwoFactorCode = await BotDatabase.MobileAuthenticator.GenerateToken().ConfigureAwait(false);
+
+			/*if (string.IsNullOrEmpty(TwoFactorCode) && HasMobileAuthenticator) {
+				// We should always include 2FA token, even if it's not required
+				TwoFactorCode = await BotDatabase.MobileAuthenticator.GenerateToken().ConfigureAwait(false);
+			}*/
 
 			InitConnectionFailureTimer();
 
@@ -428,11 +458,13 @@ namespace sc {
 				Password = password,
 				SentryFileHash = sentryFileHash,
 				ShouldRememberPassword = BotConfig.UseLoginKeys,
-				TwoFactorCode = !string.IsNullOrEmpty(TwoFactorCode) ? TwoFactorCode : null,
+				TwoFactorCode = TwoFactorCode,
 				Username = username
 			};
 
-			//if (OSType == EOSType.Unknown) OSType = logOnDetails.ClientOSType;
+			/*if (OSType == EOSType.Unknown) {
+				OSType = logOnDetails.ClientOSType;
+			}*/
 
 			SteamUser.LogOn(logOnDetails);
 		}
@@ -456,12 +488,14 @@ namespace sc {
 			OwnedPackageIDs.Clear();
 
 			//Actions.OnDisconnected();
-			//WebHandler.OnDisconnected();
-			//CardsFarmer.OnDisconnected(); 
+			WebHandler.OnDisconnected();
+			//CardsFarmer.OnDisconnected();
 			//Trading.OnDisconnected();
 
 			FirstTradeSent = false;
-			
+
+			/*await PluginsCore.OnBotDisconnected(this, callback.UserInitiated ? EResult.OK : lastLogOnResult).ConfigureAwait(false);*/
+
 			// If we initiated disconnect, do not attempt to reconnect
 			if (callback.UserInitiated && !ReconnectOnUserInitiated) {
 				return;
@@ -539,39 +573,7 @@ namespace sc {
 
 					break;
 				case EResult.AccountLogonDenied:
-
-					string authCode=null; 
-					
-					PromptResult aResult = await UserDialogs.Instance.PromptAsync(new PromptConfig
-					{
-						InputType = InputType.Name,
-						OkText = "Enter",
-						Title = "Enter your guard code",
-						IsCancellable = false,
-						MaxLength = 5
-					}).ConfigureAwait(false);
-					if (aResult.Ok && !string.IsNullOrWhiteSpace(aResult.Text))
-					{
-						authCode = aResult.Text;
-					}
-					else
-					{
-						Stop();	
-						break;
-					}
-					if (string.IsNullOrEmpty(authCode))
-					{
-					    Stop();
-					    break;
-					    
-					}
-
-					AuthCode = authCode;
-
-					break;
-				case EResult.AccountLoginDeniedNeedTwoFactor:
-					
-					string twoFactorCode=null; 
+					string authCode=null;
 					PromptResult pResult = await UserDialogs.Instance.PromptAsync(new PromptConfig
 					{
 						InputType = InputType.Name,
@@ -579,23 +581,46 @@ namespace sc {
 						Title = "Enter your guard code",
 						IsCancellable = false,
 						MaxLength = 5
-					}).ConfigureAwait(false);
+					});
 					if (pResult.Ok && !string.IsNullOrWhiteSpace(pResult.Text))
 					{
-						twoFactorCode = pResult.Text;
+						authCode = pResult.Text;
 					}
-					else
-					{
-						Stop();	
-						break;
-					}
-					
-					if (string.IsNullOrEmpty(twoFactorCode)) {
+					if (string.IsNullOrEmpty(authCode)) {
 						Stop();
+
 						break;
 					}
 
-					TwoFactorCode = twoFactorCode;
+					AuthCode = authCode;
+					/*SetUserInput(EUserInputType.SteamGuard, authCode);*/
+
+					break;
+				case EResult.AccountLoginDeniedNeedTwoFactor:
+					
+						string twoFactorCode=null;
+						PromptResult aResult = await UserDialogs.Instance.PromptAsync(new PromptConfig
+						{
+							InputType = InputType.Name,
+							OkText = "Enter",
+							Title = "Enter your guard code",
+							IsCancellable = false,
+							MaxLength = 5
+						});
+						if (aResult.Ok && !string.IsNullOrWhiteSpace(aResult.Text))
+						{
+							twoFactorCode = aResult.Text;
+						}
+						if (string.IsNullOrEmpty(twoFactorCode)) {
+							Stop();
+
+							break;
+						}
+
+						TwoFactorCode=twoFactorCode;
+						/*SetUserInput(ASF.EUserInputType.TwoFactorAuthentication, twoFactorCode);*/
+					
+
 					break;
 				case EResult.OK:
 					AccountFlags = callback.AccountFlags;
@@ -624,50 +649,51 @@ namespace sc {
 					}
 
 					// Handle steamID-based maFile
-					//	if (!HasMobileAuthenticator) {
-					//		string maFilePath = Path.Combine(SharedInfo.ConfigDirectory, SteamID + SharedInfo.MobileAuthenticatorExtension);
-					//
-					//		if (File.Exists(maFilePath)) {
-					//			await ImportAuthenticator(maFilePath).ConfigureAwait(false);
-					//		}
-					//	}
+					/*if (!HasMobileAuthenticator) {
+						string maFilePath = Path.Combine(SharedInfo.ConfigDirectory, SteamID + SharedInfo.MobileAuthenticatorExtension);
 
-					//	if (callback.ParentalSettings != null) {
-					//		(bool isSteamParentalEnabled, string steamParentalCode) = ValidateSteamParental(callback.ParentalSettings, BotConfig.SteamParentalCode);
-					//
-					//		if (isSteamParentalEnabled) {
-					//			SteamParentalActive = true;
-					//
-					//			if (!string.IsNullOrEmpty(steamParentalCode)) {
-					//				if (BotConfig.SteamParentalCode != steamParentalCode) {
-					//					SetUserInput(ASF.EUserInputType.SteamParentalCode, steamParentalCode);
-					//				}
-					//			} else if (string.IsNullOrEmpty(BotConfig.SteamParentalCode) || (BotConfig.SteamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
-					//				steamParentalCode = await Logging.GetUserInput(ASF.EUserInputType.SteamParentalCode, BotName).ConfigureAwait(false);
-					//
-					//				if (string.IsNullOrEmpty(steamParentalCode) || (steamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
-					//					Stop();
-					//
-					//					break;
-					//				}
-					//
-					//				SetUserInput(ASF.EUserInputType.SteamParentalCode, steamParentalCode);
-					//			}
-					//		} else {
-					//			SteamParentalActive = false;
-					//		}
-					//	} else if (SteamParentalActive && !string.IsNullOrEmpty(BotConfig.SteamParentalCode) && (BotConfig.SteamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
-					//		string steamParentalCode = await Logging.GetUserInput(ASF.EUserInputType.SteamParentalCode, BotName).ConfigureAwait(false);
-					//
-					//		if (string.IsNullOrEmpty(steamParentalCode) || (steamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
-					//			Stop();
-					//
-					//			break;
-					//		}
-					//
-					//		SetUserInput(ASF.EUserInputType.SteamParentalCode, steamParentalCode);
-					//	}
-
+						if (File.Exists(maFilePath)) {
+							await ImportAuthenticator(maFilePath).ConfigureAwait(false);
+						}
+					}*/
+					/*
+					if (callback.ParentalSettings != null) {
+						(bool isSteamParentalEnabled, string steamParentalCode) = ValidateSteamParental(callback.ParentalSettings, BotConfig.SteamParentalCode);
+                    
+						if (isSteamParentalEnabled) {
+							SteamParentalActive = true;
+                    
+							if (!string.IsNullOrEmpty(steamParentalCode)) {
+								if (BotConfig.SteamParentalCode != steamParentalCode) {
+									SetUserInput(ASF.EUserInputType.SteamParentalCode, steamParentalCode);
+								}
+							} else if (string.IsNullOrEmpty(BotConfig.SteamParentalCode) || (BotConfig.SteamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
+								steamParentalCode = await Logging.GetUserInput(ASF.EUserInputType.SteamParentalCode, BotName).ConfigureAwait(false);
+                    
+								if (string.IsNullOrEmpty(steamParentalCode) || (steamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
+									Stop();
+                    
+									break;
+								}
+                    
+								SetUserInput(ASF.EUserInputType.SteamParentalCode, steamParentalCode);
+							}
+						} else {
+							SteamParentalActive = false;
+						}
+					} 
+					else if (SteamParentalActive && !string.IsNullOrEmpty(BotConfig.SteamParentalCode) && (BotConfig.SteamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
+						string steamParentalCode = await Logging.GetUserInput(ASF.EUserInputType.SteamParentalCode, BotName).ConfigureAwait(false);
+                    
+						if (string.IsNullOrEmpty(steamParentalCode) || (steamParentalCode.Length != BotConfig.SteamParentalCodeLength)) {
+							Stop();
+                    
+							break;
+						}
+                    
+						SetUserInput(ASF.EUserInputType.SteamParentalCode, steamParentalCode);
+					}
+					*/
 					WebHandler.OnVanityURLChanged(callback.VanityURL);
 
 					if (!await WebHandler.Init(SteamID, SteamClient.Universe, callback.WebAPIUserNonce, SteamParentalActive ? BotConfig.SteamParentalCode : null).ConfigureAwait(false)) {
@@ -679,9 +705,9 @@ namespace sc {
 					// Pre-fetch API key for future usage if possible
 					Utilities.InBackground(WebHandler.HasValidApiKey);
 
-					//	if ((GamesRedeemerInBackgroundTimer == null) && BotDatabase.HasGamesToRedeemInBackground) {
-					//		Utilities.InBackground(RedeemGamesInBackground);
-					//	}
+					/*if ((GamesRedeemerInBackgroundTimer == null) && BotDatabase.HasGamesToRedeemInBackground) {
+						Utilities.InBackground(RedeemGamesInBackground);
+					}*/
 
 					SCHandler.SetCurrentMode(2);
 					SCHandler.RequestItemAnnouncements();
@@ -689,14 +715,31 @@ namespace sc {
 					// Sometimes Steam won't send us our own PersonaStateCallback, so request it explicitly
 					RequestPersonaStateUpdate();
 
-					//	Utilities.InBackground(InitializeFamilySharing);
+					/*Utilities.InBackground(InitializeFamilySharing);*/
 
+					/*if (Statistics != null) {
+						Utilities.InBackground(Statistics.OnLoggedOn);
+					}*/
 
 					if (BotConfig.OnlineStatus != EPersonaState.Offline) {
 						SteamFriends.SetPersonaState(BotConfig.OnlineStatus);
 					}
-					Device.BeginInvokeOnMainThread(()=>Application.Current.MainPage = new NavigationPage(new second_page()));
 
+					/*if (BotConfig.SteamMasterClanID != 0) {
+						Utilities.InBackground(
+							async () => {
+								if (!await WebHandler.JoinGroup(BotConfig.SteamMasterClanID).ConfigureAwait(false)) {
+									Logger.LogGenericWarning(string.Format(Strings.WarningFailedWithError, nameof(WebHandler.JoinGroup)));
+								}
+
+								await JoinMasterChatGroupID().ConfigureAwait(false);
+							}
+						);
+					}*/
+
+					/*await PluginsCore.OnBotLoggedOn(this).ConfigureAwait(false);*/
+					Device.BeginInvokeOnMainThread(()=>Application.Current.MainPage = new NavigationPage(new second_page()));
+					
 					break;
 				case EResult.InvalidPassword:
 				case EResult.NoConnection:
@@ -708,13 +751,13 @@ namespace sc {
 				case EResult.TwoFactorCodeMismatch:
 					Logger.LogGenericWarning(string.Format(Strings.BotUnableToLogin, callback.Result, callback.ExtendedResult));
 
-					//		if ((callback.Result == EResult.TwoFactorCodeMismatch) && HasMobileAuthenticator) {
-					//			if (++TwoFactorCodeFailures >= MaxTwoFactorCodeFailures) {
-					//				TwoFactorCodeFailures = 0;
-					//				Logger.LogGenericError(string.Format(Strings.BotInvalidAuthenticatorDuringLogin, MaxTwoFactorCodeFailures));
-					//				Stop();
-					//			}
-					//		}
+					/*if ((callback.Result == EResult.TwoFactorCodeMismatch) && HasMobileAuthenticator) {
+						if (++TwoFactorCodeFailures >= MaxTwoFactorCodeFailures) {
+							TwoFactorCodeFailures = 0;
+							Logger.LogGenericError(string.Format(Strings.BotInvalidAuthenticatorDuringLogin, MaxTwoFactorCodeFailures));
+							Stop();
+						}
+					}*/
 
 					break;
 				default:
@@ -724,10 +767,9 @@ namespace sc {
 
 					break;
 			}
-			
-			
 		}
 
+		
 		private void OnLoginKey(SteamUser.LoginKeyCallback callback) {
 			if (string.IsNullOrEmpty(callback?.LoginKey)) {
 				Logger.LogNullError(nameof(callback) + " || " + nameof(callback.LoginKey));
@@ -803,7 +845,41 @@ namespace sc {
 				}
 			);
 		}
+		private void OnLoggedOff(SteamUser.LoggedOffCallback callback) {
+			if (callback == null) {
+				Logger.LogNullError(nameof(callback));
 
+				return;
+			}
+
+			LastLogOnResult = callback.Result;
+
+			Logger.LogGenericInfo(string.Format(Strings.BotLoggedOff, callback.Result));
+
+			switch (callback.Result) {
+				case EResult.LoggedInElsewhere:
+					// This result directly indicates that playing was blocked when we got (forcefully) disconnected
+					PlayingWasBlocked = true;
+
+					break;
+				case EResult.LogonSessionReplaced:
+					DateTime now = DateTime.UtcNow;
+
+					if (now.Subtract(LastLogonSessionReplaced).TotalHours < 1) {
+						Logger.LogGenericError(Strings.BotLogonSessionReplaced);
+						Stop();
+
+						return;
+					}
+
+					LastLogonSessionReplaced = now;
+
+					break;
+			}
+
+			ReconnectOnUserInitiated = true;
+			SteamClient.Disconnect();
+		}
 
 		public static string ReadAllTextAsync([NotNull] string path) => File.ReadAllText(path);
 

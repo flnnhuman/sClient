@@ -17,6 +17,11 @@ namespace sc
         internal const string KeysUnusedExtension = ".unused";
         internal const string DatabaseExtension = ".db";
         internal const string ConfigDirectory = "config";
+        internal const string DebugDirectory = "debug";
+        internal const string SC = nameof(sc);
+        internal const string GlobalConfigFileName = SC + JsonConfigExtension;
+        internal const string GlobalDatabaseFileName = SC + DatabaseExtension;
+
         internal static Version Version =>Version.Parse(AppInfo.VersionString);
         
         internal static string PublicIdentifier => AssemblyName;

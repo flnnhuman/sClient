@@ -23,6 +23,8 @@ namespace sc {
 		
 		public MainPage() {
 			InitializeComponent();
+			sc.InitializeGlobalConfigAndDatabase();
+			sc.Init().ConfigureAwait(false);
 		}
 
 		public string Login => LoginField.Text;
@@ -30,8 +32,6 @@ namespace sc {
 		
 		private async void Button_OnClicked(object sender, EventArgs e) {
 			ThreadPool.QueueUserWorkItem(o => {
-				sc.InitializeGlobalConfigAndDatabase();
-				sc.Init().ConfigureAwait(false);
 				//bot = new Bot("bot", BotConfig, BotDatabase);
 				RegisterBot(Login);
 				bot.InitModules().ConfigureAwait(false);

@@ -142,6 +142,15 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Logged off of Steam: {0}.
+        /// </summary>
+        public static string BotLoggedOff {
+            get {
+                return ResourceManager.GetString("BotLoggedOff", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Successfully logged on as {0}..
         /// </summary>
         public static string BotLoggedOn {
@@ -156,6 +165,15 @@ namespace sc {
         public static string BotLoggingIn {
             get {
                 return ResourceManager.GetString("BotLoggingIn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This account seems to be used in another ASF instance, which is undefined behaviour, refusing to keep it running!.
+        /// </summary>
+        public static string BotLogonSessionReplaced {
+            get {
+                return ResourceManager.GetString("BotLogonSessionReplaced", resourceCulture);
             }
         }
         
@@ -305,6 +323,15 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Refreshing our session!.
+        /// </summary>
+        public static string RefreshingOurSession {
+            get {
+                return ResourceManager.GetString("RefreshingOurSession", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Starting....
         /// </summary>
         public static string Starting {
@@ -418,6 +445,15 @@ namespace sc {
         public static string WarningWorkaroundTriggered {
             get {
                 return ResourceManager.GetString("WarningWorkaroundTriggered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to It looks like it&apos;s your first launch of the program, welcome!.
+        /// </summary>
+        public static string Welcome {
+            get {
+                return ResourceManager.GetString("Welcome", resourceCulture);
             }
         }
     }

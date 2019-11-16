@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.IO;
 using Newtonsoft.Json;
 using SteamKit2;
 
 namespace sc {
 	public class GlobalConfig {
-		private const bool DefaultDebug = false;
+		private const bool DefaultDebug = true;
 
 		internal const byte DefaultConnectionTimeout = 90;
 		internal const byte DefaultLoginLimiterDelay = 10;

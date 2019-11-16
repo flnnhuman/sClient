@@ -150,9 +150,15 @@
     <value>Persistent database could not be loaded, if issue persists, please remove {0} in order to recreate the database!</value>
         <comment>{0} will be replaced by file's path</comment>
   </data>
+    <data name="RefreshingOurSession" xml:space="preserve">
+    <value>Refreshing our session!</value>
+  </data>
     <data name="ErrorConfigPropertyInvalid" xml:space="preserve">
     <value>Configured {0} property is invalid: {1}</value>
         <comment>{0} will be replaced by name of the configuration property, {1} will be replaced by invalid value</comment>
+  </data>
+    <data name="Welcome" xml:space="preserve">
+    <value>It looks like it's your first launch of the program, welcome!</value>
   </data>
     <data name="FileLoaded" xml:space="preserve">
     <value>{0} was loaded.</value>
@@ -161,5 +167,12 @@
     <data name="FileCreated" xml:space="preserve">
     <value>{0} was created.</value>
         <comment>{0} will be replaced by file name</comment>
+  </data>
+    <data name="BotLogonSessionReplaced" xml:space="preserve">
+    <value>This account seems to be used in another ASF instance, which is undefined behaviour, refusing to keep it running!</value>
+  </data>
+    <data name="BotLoggedOff" xml:space="preserve">
+    <value>Logged off of Steam: {0}</value>
+        <comment>{0} will be replaced by logging off reason (string)</comment>
   </data>
 </root>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -23,6 +23,17 @@ namespace sc {
 		private readonly Logger Logger;
 		public TimeSpan Timeout => HttpClient.Timeout;
 
+		internal static void Init() {
+			// Set max connection limit from default of 2 to desired value
+			ServicePointManager.DefaultConnectionLimit = MaxConnections;
+
+			// Set max idle time from default of 100 seconds (100 * 1000) to desired value
+			ServicePointManager.MaxServicePointIdleTime = MaxIdleTime * 1000;
+
+			// Don't use Expect100Continue, we're sure about our POSTs, save some TCP packets
+			ServicePointManager.Expect100Continue = false;
+			
+		}
 		internal WebBrowser([NotNull] Logger logger, bool extendedTimeout = false) {
 			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
