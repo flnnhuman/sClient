@@ -738,7 +738,7 @@ namespace sc {
 					}*/
 
 					/*await PluginsCore.OnBotLoggedOn(this).ConfigureAwait(false);*/
-					Device.BeginInvokeOnMainThread(()=>Application.Current.MainPage = new NavigationPage(new second_page()));
+					Device.BeginInvokeOnMainThread(()=>Application.Current.MainPage = new mainpage1());
 					
 					break;
 				case EResult.InvalidPassword:

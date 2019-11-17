@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<MasterDetailPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="sc.mainpage1"
+             Title="MasterApp">
+  
+    <MasterDetailPage.Master>
+        <ContentPage Title="Master" BackgroundColor="Default">
+            <ContentPage.Content>
+                <StackLayout Padding="5,30,5,5">
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                       <Image WidthRequest="64" HeightRequest="64" Aspect="AspectFit" Source="steam_icon.png" VerticalOptions="Center"></Image>
+                        <Label Text ="Steam" VerticalOptions="Center"></Label>
+                    </StackLayout>
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="community.png"></Image>  
+                        <Button Text="Community" Clicked="CommunityPage" BackgroundColor="Transparent" BorderColor="Transparent"></Button>
+                    </StackLayout>
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="shopping_cart.png"></Image>  
+                        <Button Text="Store" Clicked="StorePage" BackgroundColor="Transparent" BorderColor="Transparent"></Button>
+                    </StackLayout>
+                </StackLayout>
+            </ContentPage.Content>
+        </ContentPage>
+    </MasterDetailPage.Master>
+    
+    <MasterDetailPage.Detail>
+        <ContentPage>
+            <ContentPage.Content>
+            <Label Text="DetailPage" VerticalOptions="Center" HorizontalOptions="Center"></Label>    
+            </ContentPage.Content>
+        </ContentPage>
+    </MasterDetailPage.Detail>
+</MasterDetailPage>

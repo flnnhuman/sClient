@@ -21,6 +21,10 @@
         <e p="Logger.cs" t="Include" />
         <e p="MainPage.xaml" t="Include" />
         <e p="MainPage.xaml.cs" t="Include" />
+        <e p="mainpage1.xaml" t="Include" />
+        <e p="mainpage1.xaml.cs" t="Include" />
+        <e p="MasterPage.xaml" t="Include" />
+        <e p="MasterPage.xaml.cs" t="Include" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
             <e p="netstandard2.0" t="Include">
@@ -57,6 +61,11 @@
         </e>
         <e p="Resources" t="Include">
           <e p="AboutResources.txt" t="Include" />
+          <e p="drawable" t="Include">
+            <e p="community.png" t="Include" />
+            <e p="shopping_cart.png" t="Include" />
+            <e p="steam_icon.png" t="Include" />
+          </e>
           <e p="layout" t="Include">
             <e p="Tabbar.axml" t="Include" />
             <e p="Toolbar.axml" t="Include" />

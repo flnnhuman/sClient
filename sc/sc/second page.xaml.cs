@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -17,13 +17,21 @@ namespace sc
 		public second_page()
 		{
 			InitializeComponent();
-			SetCookieClicked(null,null);
 		}
-		
-		
+
+		public string Source
+		{
+			get => localContent.Source;
+			set => localContent.Source = value;
+		}
 
 		private async void SetCookieClicked(object sender, EventArgs e)
 		{
+			if (MainPage.bot==null)
+			{
+				sc.Logger.LogNullError(nameof(MainPage.bot.WebHandler.WebBrowser.Cookies) );
+				return;
+			}
 			foreach (MyCookie myCookie in MainPage.bot.WebHandler.WebBrowser.Cookies)
 			{
 				var expiresDate = DateTime.Now;
