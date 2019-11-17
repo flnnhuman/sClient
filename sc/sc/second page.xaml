@@ -21,6 +21,7 @@
                 HorizontalOptions="End"
                 Clicked="ClearAllCookiesClicked" />
         <Button Text="Refresh " HorizontalOptions="End" Clicked="OnRefreshPageClicked" />
+        <Button Text="JS" HorizontalOptions="End" Clicked="JsClicked" ></Button>
 
     </StackLayout>
 </ContentPage>

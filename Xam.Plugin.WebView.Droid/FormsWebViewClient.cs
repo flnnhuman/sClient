@@ -40,6 +40,17 @@ namespace Xam.Plugin.WebView.Droid
             renderer.Element.Navigating = false;
         }
 
+        public override async void OnLoadResource(Android.Webkit.WebView view, string url)
+        {
+            if (Reference == null || !Reference.TryGetTarget(out FormsWebViewRenderer renderer)) return;
+            if (renderer.Element == null) return;
+            await renderer.OnJavascriptInjectionRequest("document.getElementById(\"responsive_page_menu\").style.display=\"none\";"+
+                                                        "document.getElementById(\"responsive_menu_logo\").style.display=\"none\";"+
+                                                        "document.getElementsByClassName(\"responsive_header\")[0].style.display = \"none\";"+
+                                                        "document.getElementById(\"ModalContentContainer\").style.marginTop = \"-50px\";");	//todo динамический отступ
+            base.OnLoadResource(view, url);
+        }
+
         public override WebResourceResponse ShouldInterceptRequest(Android.Webkit.WebView view, IWebResourceRequest request)
         {
             if (Reference == null || !Reference.TryGetTarget(out FormsWebViewRenderer renderer)) goto EndShouldInterceptRequest;

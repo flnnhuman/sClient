@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -59,5 +59,13 @@ namespace sc
 		{
 			await localContent.ClearCookiesAsync();
 		}
+		private async void JsClicked(object sender, EventArgs e)
+		{
+		await localContent.InjectJavascriptAsync("document.getElementById(\"responsive_page_menu\").style.display=\"none\";"+
+													 "document.getElementById(\"responsive_menu_logo\").style.display=\"none\";"+
+			                                         "document.getElementsByClassName(\"responsive_header\")[0].style.display = \"none\";"+
+			                                         "document.getElementById(\"ModalContentContainer\").style.marginTop = \"-50px\";");	//todo динамический отступ
+		}
+		
 	}
 }
