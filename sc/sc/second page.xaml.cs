@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -26,13 +26,12 @@ namespace sc
 		}
 
 		private async void SetCookieClicked(object sender, EventArgs e)
-		{
-			if (MainPage.bot==null)
+		{ 
+			if (sc.bot==null)
 			{
-				sc.Logger.LogNullError(nameof(MainPage.bot.WebHandler.WebBrowser.Cookies) );
-				return;
+				sc.Logger.LogNullError(nameof(sc.bot.WebHandler.WebBrowser.Cookies) );
 			}
-			foreach (MyCookie myCookie in MainPage.bot.WebHandler.WebBrowser.Cookies)
+			foreach (MyCookie myCookie in sc.bot.WebHandler.WebBrowser.Cookies)
 			{
 				var expiresDate = DateTime.Now;
 				expiresDate = expiresDate.AddDays(30);

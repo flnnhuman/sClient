@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -742,7 +742,7 @@ namespace sc {
 					}*/
 
 					/*await PluginsCore.OnBotLoggedOn(this).ConfigureAwait(false);*/
-					Device.BeginInvokeOnMainThread(()=>Application.Current.MainPage = new mainpage1());
+					Device.BeginInvokeOnMainThread(()=>Application.Current.MainPage = sc.Mainpage1);
 					
 					break;
 				case EResult.InvalidPassword:
