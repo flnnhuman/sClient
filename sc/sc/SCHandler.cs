@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using SteamKit2;
 using SteamKit2.Internal;
@@ -157,7 +158,62 @@ namespace sc {
 			ClientMsgProtobuf<CMsgClientRequestItemAnnouncements> request = new ClientMsgProtobuf<CMsgClientRequestItemAnnouncements>(EMsg.ClientRequestItemAnnouncements);
 			Client.Send(request);
 		}
+		internal async Task<bool> IgnoreFriend(ulong steamID) {
+			if ((steamID == 0) || !new SteamID(steamID).IsIndividualAccount) {
+				Logger.LogNullError(nameof(steamID));
+				return false;
+			}
 
+			if (!Client.IsConnected) {
+				return false;
+			}
+			CPlayer_IgnoreFriend_Request request = new CPlayer_IgnoreFriend_Request { steamid = steamID };
+
+			SteamUnifiedMessages.ServiceMethodResponse response;
+			try {
+				response = await UnifiedPlayerService.SendMessage(x => x.IgnoreFriend(request));
+			} catch (Exception e) {
+				Logger.LogGenericWarningException(e);
+
+				return false;
+			}
+
+			if (response == null) {
+				Logger.LogNullError(nameof(response));
+
+				return false;
+			}
+			return response.Result == EResult.OK;
+		}
+		internal async Task<bool> AddFriend(ulong steamID) {
+			if ((steamID == 0) || !new SteamID(steamID).IsIndividualAccount) {
+				Logger.LogNullError(nameof(steamID));
+
+				return false;
+			}
+
+			if (!Client.IsConnected) {
+				return false;
+			}
+
+			CPlayer_AddFriend_Request request = new CPlayer_AddFriend_Request { steamid = steamID };
+			SteamUnifiedMessages.ServiceMethodResponse response;
+
+			try {
+				response = await UnifiedPlayerService.SendMessage(x => x.AddFriend(request));
+			} catch (Exception e) {
+				Logger.LogGenericWarningException(e);
+				
+				return false;
+			}
+
+			if (response == null) {
+				Logger.LogNullError(nameof(response));
+				return false;
+			}
+
+			return response.Result == EResult.OK;
+		}
 		public void SetCurrentMode(uint chatMode) {
 			if (chatMode == 0) {
 				sc.Logger.LogNullError(nameof(chatMode));
