@@ -9,6 +9,11 @@ using SteamKit2.Discovery;
 
 namespace sc {
 	public class sc {
+		public static Bot bot;
+
+	
+		public static mainpage1 Mainpage1= new mainpage1();
+		
 		public static readonly Logger Logger = new Logger(nameof(sc));
 
 		public static GlobalConfig GlobalConfig { get; private set; }

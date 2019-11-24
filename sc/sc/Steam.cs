@@ -1,8 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -11,6 +14,8 @@ using Acr.UserDialogs;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using SteamKit2;
+using SteamKit2.Internal;
+using SteamKit2.Unified.Internal;
 using Xamarin.Essentials;
 using Xamarin.Forms;
 // ReSharper disable MemberCanBePrivate.Global
@@ -97,9 +102,6 @@ namespace sc {
 		private uint TradesCount;
 		private string TwoFactorCode;
 		private byte TwoFactorCodeFailures;
-
-		//public static Bot bot;
-
 
 		public Bot([NotNull] string botName, [NotNull] BotConfig botConfig, [NotNull] BotDatabase botDatabase) {
 			if (string.IsNullOrEmpty(botName) || (botConfig == null) || (botDatabase == null)) {

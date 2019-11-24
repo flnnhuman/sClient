@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,19 +12,21 @@ namespace sc
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class mainpage1 : MasterDetailPage
     {
-        private second_page SecondPage;
+        public second_page SecondPage;
         public mainpage1()
         {
             InitializeComponent();
-            Detail = new NavigationPage(new MainPage());
+            SecondPage=new second_page();
+            Detail = new NavigationPage(SecondPage);
             
         }
 
         void CommunityPage(object sender, EventArgs e)
         {
-            if (SecondPage?.Source==WebHandler.SteamCommunityURL){IsPresented = false; return;}
-            if (SecondPage == null) SecondPage=new second_page(){Source =WebHandler.SteamCommunityURL};
-            SecondPage.Source = WebHandler.SteamCommunityURL;
+            string Source = WebHandler.SteamCommunityURL;
+            if (SecondPage?.Source==Source){IsPresented = false; return;}
+            if (SecondPage == null) SecondPage=new second_page(){Source =Source};
+            SecondPage.Source = Source;
             Detail = new NavigationPage(SecondPage);
             IsPresented = false;
            

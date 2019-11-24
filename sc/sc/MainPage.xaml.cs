@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ namespace sc {
 			Success
 		}
 
-		public static Bot bot;
+		
 		
 		public static readonly string CacheDir = FileSystem.CacheDirectory;
 		public static readonly string MainDir = FileSystem.AppDataDirectory;
@@ -34,12 +34,12 @@ namespace sc {
 			ThreadPool.QueueUserWorkItem(o => {
 				//bot = new Bot("bot", BotConfig, BotDatabase);
 				RegisterBot(Login);
-				bot.InitModules().ConfigureAwait(false);
-				bot.InitStart();
+				sc.bot.InitModules().ConfigureAwait(false);
+				sc.bot.InitStart();
 			});
 		}
 		private void Button2_OnClicked(object sender, EventArgs e) {
-			Toast(bot.SteamID.ToString(),EToastType.Message);
+			Toast(sc.bot.SteamID.ToString(),EToastType.Message);
 		}
 
 		public static void Toast(string msg, EToastType type) {
@@ -122,11 +122,11 @@ namespace sc {
 				//	return;
 				//}
 
-				bot = new Bot(botName, botConfig, botDatabase);
+				sc.bot = new Bot(botName, botConfig, botDatabase);
 
-				if (!Bot.Bots.TryAdd(botName, bot)) {
-					sc.Logger.LogNullError(nameof(bot));
-					bot.Dispose();
+				if (!Bot.Bots.TryAdd(botName, sc.bot)) {
+					sc.Logger.LogNullError(nameof(sc.bot));
+					sc.bot.Dispose();
 
 					return;
 				}
@@ -134,8 +134,8 @@ namespace sc {
 				Bot.BotsSemaphore.Release();
 			}
 			
-			await bot.InitModules().ConfigureAwait(false);
-			bot.InitStart();
+			await sc.bot.InitModules().ConfigureAwait(false);
+			sc.bot.InitStart();
 		}
 
 	}
