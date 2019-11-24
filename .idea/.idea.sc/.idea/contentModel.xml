@@ -32,6 +32,7 @@
             </e>
           </e>
         </e>
+        <e p="RuntimeCompability.cs" t="Include" />
         <e p="sc.cs" t="Include" />
         <e p="sc.csproj" t="IncludeRecursive" />
         <e p="sc.csproj.DotSettings" t="Include" />
