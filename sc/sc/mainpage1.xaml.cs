@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,9 +34,37 @@ namespace sc
         }
         void StorePage(object sender, EventArgs e)
         {
-            if (SecondPage?.Source==WebHandler.SteamStoreURL){IsPresented = false; return;}
-            if (SecondPage == null) SecondPage=new second_page(){Source =WebHandler.SteamStoreURL};
-                else SecondPage.Source = WebHandler.SteamStoreURL;
+            string Source = WebHandler.SteamStoreURL;
+            if (SecondPage?.Source==Source){IsPresented = false; return;}
+            if (SecondPage == null) SecondPage=new second_page(){Source =Source};
+                else SecondPage.Source = Source;
+            
+            Detail = new NavigationPage(SecondPage);
+            IsPresented = false;
+        }
+
+        void FriendsPage(object sender, EventArgs e)
+        {
+            Detail = new NavigationPage(new Friends());
+            IsPresented = false;
+        }
+        void ProfilePage(object sender, EventArgs e)
+        {
+            string Source = WebHandler.SteamCommunityURL + "/my";
+            if (SecondPage?.Source==Source){IsPresented = false; return;}
+            if (SecondPage == null) SecondPage=new second_page(){Source =Source};
+            SecondPage.Source = Source;
+            Detail = new NavigationPage(SecondPage);
+            IsPresented = false;
+           
+           
+        }
+
+        public void OpenWebPage(string uri)
+        {
+            if (SecondPage?.Source==uri){IsPresented = false;SecondPage.Refresh(); return;}
+            if (SecondPage == null) SecondPage=new second_page(){Source =uri};
+            else SecondPage.Source = uri;
             
             Detail = new NavigationPage(SecondPage);
             IsPresented = false;

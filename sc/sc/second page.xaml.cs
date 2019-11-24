@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -24,7 +24,10 @@ namespace sc
 			get => localContent.Source;
 			set => localContent.Source = value;
 		}
-
+		public void Refresh()
+		{
+			localContent.Refresh();
+		}
 		private async void SetCookieClicked(object sender, EventArgs e)
 		{ 
 			if (sc.bot==null)

@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content.PM;
 using Android.Content.Res;
 using Android.OS;
+using FFImageLoading.Forms.Platform;
 using Plugin.CurrentActivity;
 using sc.Android;
 using Xam.Plugin.WebView.Droid;
@@ -30,6 +31,7 @@ namespace sc.Android
 			base.OnCreate(savedInstanceState);
 			FormsWebViewRenderer.Initialize();
 			Forms.Init(this, savedInstanceState);
+			CachedImageRenderer.Init(true);
 			LoadApplication(new App());
 			
 		}

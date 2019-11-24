@@ -12,8 +12,12 @@
         <e p="bin" t="ExcludeRecursive" />
         <e p="BotConfig.cs" t="Include" />
         <e p="BotDatabase.cs" t="Include" />
+        <e p="ChatPage.xaml" t="Include" />
+        <e p="ChatPage.xaml.cs" t="Include" />
         <e p="Debugging.cs" t="Include" />
         <e p="Events.cs" t="Include" />
+        <e p="Friends.xaml" t="Include" />
+        <e p="Friends.xaml.cs" t="Include" />
         <e p="GlobalConfig.cs" t="Include" />
         <e p="GlobalDatabase.cs" t="Include" />
         <e p="Helpers.cs" t="Include" />
