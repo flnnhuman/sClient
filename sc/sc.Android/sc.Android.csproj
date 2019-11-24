@@ -77,8 +77,10 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\community.png" />
+    <AndroidResource Include="Resources\drawable\message_icon.png" />
     <AndroidResource Include="Resources\drawable\shopping_cart.png" />
     <AndroidResource Include="Resources\drawable\steam_icon.png" />
+    <AndroidResource Include="Resources\drawable\user_icon.png" />
     <AndroidResource Include="Resources\layout\Tabbar.axml" />
     <AndroidResource Include="Resources\layout\Toolbar.axml" />
     <AndroidResource Include="Resources\values\styles.xml" />
