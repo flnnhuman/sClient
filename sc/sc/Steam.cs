@@ -149,21 +149,23 @@ namespace sc {
 			//            CallbackManager.Subscribe<SteamApps.LicenseListCallback>(OnLicenseList);
 			//         
 			SteamFriends = SteamClient.GetHandler<SteamFriends>();
-			//            CallbackManager.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
-			//            CallbackManager.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
-			//         
-			//            CallbackManager.Subscribe<SteamUnifiedMessages.ServiceMethodNotification>(OnServiceMethod);
+			CallbackManager.Subscribe < SteamFriends.FriendMsgHistoryCallback>(OnFriendMsgHistory);
+			CallbackManager.Subscribe<SteamFriends.FriendAddedCallback>(OnFriendAdded);
+			CallbackManager.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
+			CallbackManager.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
+			CallbackManager.Subscribe<SteamFriends.FriendMsgCallback>(OnMessageReceived);
+			
+			CallbackManager.Subscribe<SteamUnifiedMessages.ServiceMethodNotification>(OnServiceMethod);
 			//         
 			SteamUser = SteamClient.GetHandler<SteamUser>();
 			CallbackManager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
 			CallbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
 			CallbackManager.Subscribe<SteamUser.LoginKeyCallback>(OnLoginKey);
 			CallbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth);
-			//            CallbackManager.Subscribe<SteamUser.WalletInfoCallback>(OnWalletUpdate);
-
+			CallbackManager.Subscribe<SteamUser.WalletInfoCallback>(OnWalletUpdate);
 			//CallbackManager.Subscribe<SCHandler.PlayingSessionStateCallback>(OnPlayingSessionState);
 			//CallbackManager.Subscribe<SCHandler.SharedLibraryLockStatusCallback>(OnSharedLibraryLockStatus);
-			//CallbackManager.Subscribe<SCHandler.UserNotificationsCallback>(OnUserNotifications);
+			CallbackManager.Subscribe<SCHandler.UserNotificationsCallback>(OnUserNotifications);
 			//CallbackManager.Subscribe<SCHandler.VanityURLChangedCallback>(OnVanityURLChangedCallback);
 
 			/*Actions = new Actions(this);
@@ -324,7 +326,7 @@ namespace sc {
 			}
 
 			Logger.LogGenericError(Strings.BotHeartBeatFailed);
-			//await Destroy(true).ConfigureAwait(false);
+			await Destroy(true).ConfigureAwait(false);
 			 await RegisterBot(BotName).ConfigureAwait(false);
 		}
 
@@ -883,6 +885,265 @@ namespace sc {
 			SteamClient.Disconnect();
 		}
 
+		void OnFriendMsgHistory(SteamFriends.FriendMsgHistoryCallback callback)
+		{
+			if (callback.Result != EResult.OK)
+			{
+				Logger.LogGenericError(nameof(callback) + " || " + nameof(callback.Result));	
+			}
+			
+			
+		}
+		static void OnFriendAdded( SteamFriends.FriendAddedCallback callback)
+		{
+			// someone accepted our friend request, or we accepted one
+			Debug.WriteLine( "{0} is now a friend", callback.PersonaName );
+		}
+		private async void OnFriendsList(SteamFriends.FriendsListCallback callback) {
+			if (callback?.FriendList == null) {
+				Logger.LogNullError(nameof(callback) + " || " + nameof(callback.FriendList));
+
+				return;
+			}
+			int friendCount = SteamFriends.GetFriendCount();
+			for ( int x = 0 ; x < friendCount ; x++ )
+			{
+				// steamids identify objects that exist on the steam network, such as friends, as an example
+				SteamID steamIdFriend = SteamFriends.GetFriendByIndex( x );
+
+				// we'll just display the STEAM_ rendered version
+				Debug.WriteLine( "Friend: {0}", steamIdFriend.Render() );
+			}
+			
+			int count = callback.FriendList.Count(friend =>
+				friend.Relationship == EFriendRelationship.RequestRecipient);
+			if (count>0)
+			{
+				bool acceptFriendRequest = await UserDialogs.Instance.ConfirmAsync(new ConfirmConfig()
+				{
+					Message = "Accept this request?",
+					Title = String.Format("you have {0} friend request{1}, do you want to check?", count,
+						count > 1 ? "" : "s"),
+					CancelText = "Ignore",
+					OkText = "Accept"
+				});
+				if (acceptFriendRequest)
+				{
+
+					sc.Mainpage1.OpenWebPage(WebHandler.SteamCommunityURL + "/my/friends/pending");
+				}
+			}
+
+
+
+			foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList.Where(friend => friend.Relationship == EFriendRelationship.RequestRecipient)) {//todo linq
+				switch (friend.SteamID.AccountType) {
+					//case EAccountType.Clan:
+					//	bool acceptGroupRequest = await PluginsCore.OnBotFriendRequest(this, friend.SteamID).ConfigureAwait(false);
+                    //
+					//	if (acceptGroupRequest) {
+					//		SCHandler.AcknowledgeClanInvite(friend.SteamID, true);
+					//		await JoinMasterChatGroupID().ConfigureAwait(false);
+                    //
+					//		break;
+					//	}
+                    //
+					//	if (BotConfig.BotBehaviour.HasFlag(BotConfig.EBotBehaviour.RejectInvalidGroupInvites)) {
+					//		SCHandler.AcknowledgeClanInvite(friend.SteamID, false);
+					//	}
+                    //
+					//	break;
+					default:
+
+						
+						//bool acceptFriendRequest = await PluginsCore.OnBotFriendRequest(this, friend.SteamID).ConfigureAwait(false);
+						
+						break;
+				}
+			}
+		}
+		private async void OnServiceMethod(SteamUnifiedMessages.ServiceMethodNotification notification) {
+			if (notification == null) {
+				Logger.LogNullError(nameof(notification));
+
+				return;
+			}
+
+			switch (notification.MethodName) {
+				case "ChatRoomClient.NotifyIncomingChatMessage#1":
+					await OnIncomingChatMessage((CChatRoom_IncomingChatMessage_Notification) notification.Body).ConfigureAwait(false);
+
+					break;
+				case "FriendMessagesClient.IncomingMessage#1":
+					await OnIncomingMessage((CFriendMessages_IncomingMessage_Notification) notification.Body).ConfigureAwait(false);
+
+					break;
+			}
+		}
+		private async Task OnIncomingChatMessage(CChatRoom_IncomingChatMessage_Notification notification) {
+			if (notification == null) {
+				Logger.LogNullError(nameof(notification));
+
+				return;
+			}
+
+			// Under normal circumstances, timestamp must always be greater than 0, but Steam already proved that it's capable of going against the logic
+			if ((notification.steamid_sender != SteamID) && (notification.timestamp > 0) && BotConfig.BotBehaviour.HasFlag(BotConfig.EBotBehaviour.MarkReceivedMessagesAsRead)) {
+				//todo MarkAsRead Utilities.InBackground(() => SCHandler.AckChatMessage(notification.chat_group_id, notification.chat_id, notification.timestamp));
+			} 	
+
+			string message;
+
+			// Prefer to use message without bbcode, but only if it's available
+			if (!string.IsNullOrEmpty(notification.message_no_bbcode)) {
+				message = notification.message_no_bbcode;
+			} else if (!string.IsNullOrEmpty(notification.message)) {
+				message = UnEscape(notification.message);
+			} else {
+				return;
+			}
+
+			Logger.LogChatMessage(false, message, notification.chat_group_id, notification.chat_id, notification.steamid_sender);
+
+			// Steam network broadcasts chat events also when we don't explicitly sign into Steam community
+			// We'll explicitly ignore those messages when using offline mode, as it was done in the first version of Steam chat when no messages were broadcasted at all before signing in
+			// Handling messages will still work correctly in invisible mode, which is how it should work in the first place
+			// This goes in addition to usual logic that ignores irrelevant messages from being parsed further
+	
+			
+			// todo await Commands.HandleMessage(notification.chat_group_id, notification.chat_id, notification.steamid_sender, message).ConfigureAwait(false);
+		}
+		private async Task OnIncomingMessage(CFriendMessages_IncomingMessage_Notification notification) {
+			if (notification == null) {
+				Logger.LogNullError(nameof(notification));
+
+				return;
+			}
+
+			if ((EChatEntryType) notification.chat_entry_type != EChatEntryType.ChatMsg) {
+				return;
+			}
+
+			// Under normal circumstances, timestamp must always be greater than 0, but Steam already proved that it's capable of going against the logic
+			if (!notification.local_echo && (notification.rtime32_server_timestamp > 0) && BotConfig.BotBehaviour.HasFlag(BotConfig.EBotBehaviour.MarkReceivedMessagesAsRead)) {
+				//todo Utilities.InBackground(() => SCHandler.AckMessage(notification.steamid_friend, notification.rtime32_server_timestamp));
+			}
+
+			string message;
+
+			// Prefer to use message without bbcode, but only if it's available
+			if (!string.IsNullOrEmpty(notification.message_no_bbcode)) {
+				message = notification.message_no_bbcode;
+			} else if (!string.IsNullOrEmpty(notification.message)) {
+				message = UnEscape(notification.message);
+			} else {
+				return;
+			}
+
+			Logger.LogChatMessage(notification.local_echo, message, steamID: notification.steamid_friend);
+
+			// Steam network broadcasts chat events also when we don't explicitly sign into Steam community
+			// We'll explicitly ignore those messages when using offline mode, as it was done in the first version of Steam chat when no messages were broadcasted at all before signing in
+			// Handling messages will still work correctly in invisible mode, which is how it should work in the first place
+			// This goes in addition to usual logic that ignores irrelevant messages from being parsed further
+			if (notification.local_echo || (BotConfig.OnlineStatus == EPersonaState.Offline)) {
+				return;
+			}
+
+			//todo await Commands.HandleMessage(notification.steamid_friend, message).ConfigureAwait(false);
+		}
+		private void OnPersonaState(SteamFriends.PersonaStateCallback callback) {
+			if (callback == null) {
+				Logger.LogNullError(nameof(callback));
+
+				return;
+			}
+
+			if (callback.FriendID != SteamID) {
+				return;
+			}
+
+			string avatarHash = null;
+
+			if ((callback.AvatarHash != null) && (callback.AvatarHash.Length > 0) && callback.AvatarHash.Any(singleByte => singleByte != 0)) {
+				avatarHash = BitConverter.ToString(callback.AvatarHash).Replace("-", "").ToLowerInvariant();
+
+				if (string.IsNullOrEmpty(avatarHash) || avatarHash.All(singleChar => singleChar == '0')) {
+					avatarHash = null;
+				}
+			}
+
+			AvatarHash = avatarHash;
+			Nickname = callback.Name;
+		}
+		
+		 void OnMessageReceived(SteamFriends.FriendMsgCallback callback)
+		{
+			
+		}
+		private void OnWalletUpdate(SteamUser.WalletInfoCallback callback) {
+			if (callback == null) {
+				Logger.LogNullError(nameof(callback));
+
+				return;
+			}
+
+			WalletBalance = callback.LongBalance;
+			WalletCurrency = callback.Currency;
+			//todo bind wallet value
+		}
+		
+		private void OnUserNotifications(SCHandler.UserNotificationsCallback callback) {
+			if (callback == null) {
+				Logger.LogNullError(nameof(callback));
+
+				return;
+			}
+
+			if ((callback.Notifications == null) || (callback.Notifications.Count == 0)) {
+				return;
+			}
+
+			foreach ((SCHandler.UserNotificationsCallback.EUserNotification notification, uint count) in callback.Notifications) {
+				switch (notification) {
+					case SCHandler.UserNotificationsCallback.EUserNotification.Gifts:
+						/*bool newGifts = count > GiftsCount; todo gifts notify 
+						GiftsCount = count;
+
+						if (newGifts && BotConfig.AcceptGifts) {
+							Logger.LogGenericTrace(nameof(ArchiHandler.UserNotificationsCallback.EUserNotification.Gifts));
+							Utilities.InBackground(Actions.AcceptDigitalGiftCards);
+						}
+						 */
+						break;
+					case SCHandler.UserNotificationsCallback.EUserNotification.Items:
+						bool newItems = count > ItemsCount;
+						ItemsCount = count;
+
+						if (newItems) {
+							Logger.LogGenericDebug(nameof(SCHandler.UserNotificationsCallback.EUserNotification.Items));
+							//todo Utilities.InBackground(CardsFarmer.OnNewItemsNotification);
+
+							if (BotConfig.BotBehaviour.HasFlag(BotConfig.EBotBehaviour.DismissInventoryNotifications)) {
+								//todo Utilities.InBackground(WebHandler.MarkInventory);
+							}
+						}
+
+						break;
+					case SCHandler.UserNotificationsCallback.EUserNotification.Trading:
+						bool newTrades = count > TradesCount;
+						TradesCount = count;
+
+						if (newTrades) {
+							Logger.LogGenericDebug(nameof(SCHandler.UserNotificationsCallback.EUserNotification.Trading));
+							//todo Utilities.InBackground(Trading.OnNewTrade);
+						}
+
+						break;
+				}
+			}
+		}
+
 		public static string ReadAllTextAsync([NotNull] string path) => File.ReadAllText(path);
 
 		// ReSharper disable once MemberCanBePrivate.Global
@@ -1070,7 +1331,18 @@ namespace sc {
 
 			await Connect().ConfigureAwait(false);
 		}
-
+			private async Task Destroy(bool force = false) {
+				if (KeepRunning) {
+					if (!force) {
+						Stop();
+					} else {
+						// Stop() will most likely block due to connection freeze, don't wait for it
+						Utilities.InBackground(() => Stop());
+					}
+				}
+				Bots.TryRemove(BotName, out _);
+				
+			}
 			private void Stop(bool skipShutdownEvent = false) {
 			if (!KeepRunning) {
 				return;
@@ -1123,7 +1395,14 @@ namespace sc {
 
 			return GetFilePath(BotName, fileType);
 		}
-
+		
+		private static string UnEscape(string message) {
+			if (string.IsNullOrEmpty(message)) {
+				sc.Logger.LogNullError(nameof(message));
+				return null;
+			}
+			return message.Replace("\\[", "[").Replace("\\\\", "\\");
+		}
 		internal static string GetFilePath(string botName, EFileType fileType) {
 			if (string.IsNullOrEmpty(botName) || !Enum.IsDefined(typeof(EFileType), fileType)) {
 				sc.Logger.LogNullError(nameof(botName) + " || " + nameof(fileType));
