@@ -10,9 +10,11 @@
                               HorizontalOptions="FillAndExpand"
                               Source="https://store.steampowered.com/mobile" />
         <Button Text="Set data Cookie"
-                HorizontalOptions="End"
-                Clicked="SetCookieClicked" />
-        <Button Text="Get data Cookie"
+               Clicked="SetCookieClicked" />
+        <Button Text="Refresh"
+                Clicked="OnRefreshPageClicked" />
+
+       <!-- <Button Text="Get data Cookie"
                 HorizontalOptions="End"
                 Clicked="GetCookieClicked" />
         <Button Text="Get all Cookies"
@@ -21,8 +23,7 @@
         <Button Text="clear all Cookies"
                 HorizontalOptions="End"
                 Clicked="ClearAllCookiesClicked" />
-        <Button Text="Refresh " HorizontalOptions="End" Clicked="OnRefreshPageClicked" />
-        <Button Text="JS" HorizontalOptions="End" Clicked="JsClicked" ></Button>
-
+                <Button Text="JS" HorizontalOptions="End" Clicked="JsClicked" ></Button>
+        -->
     </StackLayout>
 </ContentPage>
