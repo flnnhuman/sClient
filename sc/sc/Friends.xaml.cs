@@ -18,6 +18,12 @@ namespace sc
         {
             InitializeComponent();
             FriendList=new List<Friend>();
+            FriendCycle:
+            if (sc.bot==null)
+            {
+                Task.Delay(TimeSpan.FromSeconds(1));
+                goto FriendCycle;
+            }
             for (int index = 0; index < sc.bot.SteamFriends.GetFriendCount(); index++)
             { 
                 if(sc.bot.SteamFriends.GetFriendRelationship(sc.bot.SteamFriends.GetFriendByIndex(index))==EFriendRelationship.Friend) 
@@ -35,6 +41,23 @@ namespace sc
         void OnListViewItemTapped(object sender, ItemTappedEventArgs e)
         {
             Friend tappedItem = e.Item as Friend;
+            sc.bot.SteamFriends.RequestMessageHistory(tappedItem.steamID);
+            for (int i = 0; i < 10; i++)
+            {
+                if (sc.MsgHistory?.SteamID==tappedItem.steamID)
+                {
+                    break;
+                }
+                Task.Delay(TimeSpan.FromSeconds(1));
+            }
+
+            foreach (var message in sc.MsgHistory.Messages)
+            {
+                sc.Logger.LogChatMessage(false, message.Message, steamID: message.SteamID);
+            }
+
+          
+
         }
 
        

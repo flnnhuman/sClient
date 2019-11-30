@@ -893,6 +893,7 @@ namespace sc {
 			}
 			
 			
+			sc.MsgHistory = callback;
 		}
 		static void OnFriendAdded( SteamFriends.FriendAddedCallback callback)
 		{

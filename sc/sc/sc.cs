@@ -15,7 +15,7 @@ namespace sc {
 		public static mainpage1 Mainpage1= new mainpage1();
 		
 		public static readonly Logger Logger = new Logger(nameof(sc));
-
+		public static SteamFriends.FriendMsgHistoryCallback MsgHistory;
 		public static GlobalConfig GlobalConfig { get; private set; }
 		public static GlobalDatabase GlobalDatabase { get; private set; }
 		public static WebBrowser WebBrowser { get; internal set; }
