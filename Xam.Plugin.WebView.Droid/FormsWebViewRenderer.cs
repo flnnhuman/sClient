@@ -137,7 +137,7 @@ namespace Xam.Plugin.WebView.Droid
         {
             if (Control == null) return;
 
-            Control.LoadUrl("about:blank");
+            //Control.LoadUrl("about:blank");todo idk what is wrong
             SetSource();
         }
 
