@@ -68,9 +68,11 @@
           <e p="AboutResources.txt" t="Include" />
           <e p="drawable" t="Include">
             <e p="community.png" t="Include" />
+            <e p="edit_button.png" t="Include" />
             <e p="message_icon.png" t="Include" />
             <e p="shopping_cart.png" t="Include" />
             <e p="steam_icon.png" t="Include" />
+            <e p="unfriend.jpg" t="Include" />
             <e p="user_icon.png" t="Include" />
           </e>
           <e p="layout" t="Include">
