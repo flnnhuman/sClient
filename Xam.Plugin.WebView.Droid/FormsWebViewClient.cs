@@ -1,26 +1,27 @@
 ﻿using System;
-
-using Android.Webkit;
-using Android.Net.Http;
-using Android.Graphics;
-using Xam.Plugin.WebView.Abstractions;
-using Android.Runtime;
 using Android.Content;
+using Android.Graphics;
+using Android.Net;
+using Android.Net.Http;
+using Android.Webkit;
+using Xam.Plugin.WebView.Abstractions;
+using Xam.Plugin.WebView.Abstractions.Delegates;
 using Xamarin.Forms;
+using Uri = Android.Net.Uri;
 
 namespace Xam.Plugin.WebView.Droid
 {
     public class FormsWebViewClient : WebViewClient
     {
-
-        readonly WeakReference<FormsWebViewRenderer> Reference;
+        private readonly WeakReference<FormsWebViewRenderer> Reference;
 
         public FormsWebViewClient(FormsWebViewRenderer renderer)
         {
             Reference = new WeakReference<FormsWebViewRenderer>(renderer);
         }
 
-        public override void OnReceivedHttpError(Android.Webkit.WebView view, IWebResourceRequest request, WebResourceResponse errorResponse)
+        public override void OnReceivedHttpError(Android.Webkit.WebView view, IWebResourceRequest request,
+            WebResourceResponse errorResponse)
         {
             if (Reference == null || !Reference.TryGetTarget(out FormsWebViewRenderer renderer)) return;
             if (renderer.Element == null) return;
@@ -30,7 +31,8 @@ namespace Xam.Plugin.WebView.Droid
             renderer.Element.Navigating = false;
         }
 
-        public override void OnReceivedError(Android.Webkit.WebView view, IWebResourceRequest request, WebResourceError error)
+        public override void OnReceivedError(Android.Webkit.WebView view, IWebResourceRequest request,
+            WebResourceError error)
         {
             if (Reference == null || !Reference.TryGetTarget(out FormsWebViewRenderer renderer)) return;
             if (renderer.Element == null) return;
@@ -44,23 +46,25 @@ namespace Xam.Plugin.WebView.Droid
         {
             if (Reference == null || !Reference.TryGetTarget(out FormsWebViewRenderer renderer)) return;
             if (renderer.Element == null) return;
-            await renderer.OnJavascriptInjectionRequest("document.getElementById(\"responsive_page_menu\").style.display=\"none\";"+
-                                                        "document.getElementById(\"responsive_menu_logo\").style.display=\"none\";"+
-                                                        "document.getElementsByClassName(\"responsive_header\")[0].style.display = \"none\";"+
-                                                        "document.getElementById(\"ModalContentContainer\").style.marginTop = \"-50px\";");	//todo динамический отступ
+            await renderer.OnJavascriptInjectionRequest(
+                "document.getElementById(\"responsive_page_menu\").style.display=\"none\";" +
+                "document.getElementById(\"responsive_menu_logo\").style.display=\"none\";" +
+                "document.getElementsByClassName(\"responsive_header\")[0].style.display = \"none\";" +
+                "document.getElementById(\"ModalContentContainer\").style.marginTop = \"-50px\";"); //todo динамический отступ
             base.OnLoadResource(view, url);
         }
 
-        public override WebResourceResponse ShouldInterceptRequest(Android.Webkit.WebView view, IWebResourceRequest request)
+        public override WebResourceResponse ShouldInterceptRequest(Android.Webkit.WebView view,
+            IWebResourceRequest request)
         {
-            if (Reference == null || !Reference.TryGetTarget(out FormsWebViewRenderer renderer)) goto EndShouldInterceptRequest;
+            if (Reference == null || !Reference.TryGetTarget(out FormsWebViewRenderer renderer))
+                goto EndShouldInterceptRequest;
             if (renderer.Element == null) goto EndShouldInterceptRequest;
 
-            string url = request.Url.ToString();
-            var response = renderer.Element.HandleNavigationStartRequest(url);
+            var url = request.Url.ToString();
+            DecisionHandlerDelegate response = renderer.Element.HandleNavigationStartRequest(url);
 
             if (response.Cancel || response.OffloadOntoDevice)
-            {
                 Device.BeginInvokeOnMainThread(() =>
                 {
                     if (response.OffloadOntoDevice)
@@ -68,21 +72,19 @@ namespace Xam.Plugin.WebView.Droid
 
                     view.StopLoading();
                 });
-            }
 
             EndShouldInterceptRequest:
             return base.ShouldInterceptRequest(view, request);
         }
 
-        void CheckResponseValidity(Android.Webkit.WebView view, string url)
+        private void CheckResponseValidity(Android.Webkit.WebView view, string url)
         {
             if (Reference == null || !Reference.TryGetTarget(out FormsWebViewRenderer renderer)) return;
             if (renderer.Element == null) return;
 
-            var response = renderer.Element.HandleNavigationStartRequest(url);
+            DecisionHandlerDelegate response = renderer.Element.HandleNavigationStartRequest(url);
 
             if (response.Cancel || response.OffloadOntoDevice)
-            {
                 Device.BeginInvokeOnMainThread(() =>
                 {
                     if (response.OffloadOntoDevice)
@@ -90,7 +92,6 @@ namespace Xam.Plugin.WebView.Droid
 
                     view.StopLoading();
                 });
-            }
         }
 
         public override void OnPageStarted(Android.Webkit.WebView view, string url, Bitmap favicon)
@@ -101,16 +102,16 @@ namespace Xam.Plugin.WebView.Droid
             renderer.Element.Navigating = true;
         }
 
-        bool AttemptToHandleCustomUrlScheme(Android.Webkit.WebView view, string url)
+        private bool AttemptToHandleCustomUrlScheme(Android.Webkit.WebView view, string url)
         {
             if (url.StartsWith("mailto"))
             {
-                Android.Net.MailTo emailData = Android.Net.MailTo.Parse(url);
+                MailTo emailData = MailTo.Parse(url);
 
-                Intent email = new Intent(Intent.ActionSendto);
+                var email = new Intent(Intent.ActionSendto);
 
-                email.SetData(Android.Net.Uri.Parse("mailto:"));
-                email.PutExtra(Intent.ExtraEmail, new String[] { emailData.To });
+                email.SetData(Uri.Parse("mailto:"));
+                email.PutExtra(Intent.ExtraEmail, new[] {emailData.To});
                 email.PutExtra(Intent.ExtraSubject, emailData.Subject);
                 email.PutExtra(Intent.ExtraCc, emailData.Cc);
                 email.PutExtra(Intent.ExtraText, emailData.Body);
@@ -123,7 +124,7 @@ namespace Xam.Plugin.WebView.Droid
 
             if (url.StartsWith("http"))
             {
-                Intent webPage = new Intent(Intent.ActionView, Android.Net.Uri.Parse(url));
+                var webPage = new Intent(Intent.ActionView, Uri.Parse(url));
                 if (webPage.ResolveActivity(Forms.Context.PackageManager) != null)
                     Forms.Context.StartActivity(webPage);
 
@@ -150,7 +151,7 @@ namespace Xam.Plugin.WebView.Droid
             }
         }
 
-        public async override void OnPageFinished(Android.Webkit.WebView view, string url)
+        public override async void OnPageFinished(Android.Webkit.WebView view, string url)
         {
             if (Reference == null || !Reference.TryGetTarget(out FormsWebViewRenderer renderer)) return;
             if (renderer.Element == null) return;

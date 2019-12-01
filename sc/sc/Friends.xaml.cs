@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SteamKit2;
@@ -12,88 +11,82 @@ namespace sc
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class Friends : ContentPage
     {
-        public IList<Friend> FriendList { get; private set; }
-       
         public Friends()
         {
             InitializeComponent();
-            FriendList=new List<Friend>();
+            FriendList = new List<Friend>();
             FriendCycle:
-            if (sc.bot==null)
+            if (sc.bot == null)
             {
                 Task.Delay(TimeSpan.FromSeconds(1));
                 goto FriendCycle;
             }
-            for (int index = 0; index < sc.bot.SteamFriends.GetFriendCount(); index++)
-            { 
-                if(sc.bot.SteamFriends.GetFriendRelationship(sc.bot.SteamFriends.GetFriendByIndex(index))==EFriendRelationship.Friend) 
+
+            for (var index = 0; index < sc.bot.SteamFriends.GetFriendCount(); index++)
+                if (sc.bot.SteamFriends.GetFriendRelationship(sc.bot.SteamFriends.GetFriendByIndex(index)) ==
+                    EFriendRelationship.Friend)
                     FriendList.Add(new Friend(sc.bot.SteamFriends.GetFriendByIndex(index)));
-            }
             BindingContext = this;
-            
-        }
-        
-        void OnListViewItemSelected(object sender, SelectedItemChangedEventArgs e)
-        {
-            Friend selectedItem = e.SelectedItem as Friend;
         }
 
-        void OnListViewItemTapped(object sender, ItemTappedEventArgs e)
+        public IList<Friend> FriendList { get; }
+
+        private void OnListViewItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
-            Friend tappedItem = e.Item as Friend;
+            var selectedItem = e.SelectedItem as Friend;
+        }
+
+        private async void OnListViewItemTapped(object sender, ItemTappedEventArgs e)
+        {
+            var tappedItem = e.Item as Friend;
             sc.bot.SteamFriends.RequestMessageHistory(tappedItem.steamID);
-            for (int i = 0; i < 10; i++)
+            for (var i = 0; i < 10; i++)
             {
-                if (sc.MsgHistory?.SteamID==tappedItem.steamID)
-                {
-                    break;
-                }
-                Task.Delay(TimeSpan.FromSeconds(1));
+                if (sc.MsgHistory?.SteamID == tappedItem.steamID) break;
+                await Task.Delay(TimeSpan.FromSeconds(1));
             }
 
-            foreach (var message in sc.MsgHistory.Messages)
-            {
+            foreach (SteamFriends.FriendMsgHistoryCallback.FriendMessage message in sc.MsgHistory.Messages)
                 sc.Logger.LogChatMessage(false, message.Message, steamID: message.SteamID);
-            }
-
-          
-
         }
 
-       
+
         public static string ByteArrayToHexString(byte[] Bytes)
         {
-            StringBuilder Result = new StringBuilder(Bytes.Length * 2);
-            string HexAlphabet = "0123456789ABCDEF";
+            var Result = new StringBuilder(Bytes.Length * 2);
+            var HexAlphabet = "0123456789ABCDEF";
 
-            foreach (byte B in Bytes)
+            foreach (var B in Bytes)
             {
-                Result.Append(HexAlphabet[(int)(B >> 4)]);
-                Result.Append(HexAlphabet[(int)(B & 0xF)]);
+                Result.Append(HexAlphabet[B >> 4]);
+                Result.Append(HexAlphabet[B & 0xF]);
             }
 
             return Result.ToString();
-        } 
+        }
     }
-   
+
     public class Friend
     {
-        public string Nickname{ get; set; }
-        public EPersonaState OnlineStatus{ get; set; }
-        public SteamID steamID;
         public byte[] avatarHash;
-        public string avatarUrl{ get; set; }
-       
+
         public EFriendRelationship Relationship;
+        public SteamID steamID;
+
         public Friend(SteamID steamID)
         {
-               
             this.steamID = steamID;
             Nickname = sc.bot.SteamFriends.GetFriendPersonaName(steamID);
             OnlineStatus = sc.bot.SteamFriends.GetPersonaState();
-            avatarHash  = sc.bot.SteamFriends.GetFriendAvatar(steamID);
-            avatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" + Friends.ByteArrayToHexString(avatarHash).Substring(0, 2).ToLower() + "/" + Friends.ByteArrayToHexString(avatarHash).ToLower() + "_full.jpg";
+            avatarHash = sc.bot.SteamFriends.GetFriendAvatar(steamID);
+            avatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
+                        Friends.ByteArrayToHexString(avatarHash).Substring(0, 2).ToLower() + "/" +
+                        Friends.ByteArrayToHexString(avatarHash).ToLower() + "_full.jpg";
             Relationship = sc.bot.SteamFriends.GetFriendRelationship(steamID);
         }
+
+        public string Nickname { get; }
+        public EPersonaState OnlineStatus { get; }
+        public string avatarUrl { get; }
     }
 }

@@ -8,15 +8,6 @@ namespace Xam.Plugin.WebView.Abstractions
 {
     public interface IFormsWebView
     {
-
-        event EventHandler<DecisionHandlerDelegate> OnNavigationStarted;
-
-        event EventHandler<string> OnNavigationCompleted;
-
-        event EventHandler<int> OnNavigationError;
-
-        event EventHandler OnContentLoaded;
-
         WebViewContentType ContentType { get; set; }
 
         string Source { get; set; }
@@ -32,6 +23,14 @@ namespace Xam.Plugin.WebView.Abstractions
         bool CanGoBack { get; }
 
         bool CanGoForward { get; }
+
+        event EventHandler<DecisionHandlerDelegate> OnNavigationStarted;
+
+        event EventHandler<string> OnNavigationCompleted;
+
+        event EventHandler<int> OnNavigationError;
+
+        event EventHandler OnContentLoaded;
 
         void GoBack();
 

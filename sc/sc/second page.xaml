@@ -6,15 +6,15 @@
     <StackLayout Orientation="Vertical">
         <abstractions:FormsWebView x:Name="localContent"
                                    x:FieldModifier="internal"
-                              VerticalOptions="FillAndExpand"
-                              HorizontalOptions="FillAndExpand"
-                              Source="https://store.steampowered.com/mobile" />
+                                   VerticalOptions="FillAndExpand"
+                                   HorizontalOptions="FillAndExpand"
+                                   Source="https://store.steampowered.com/mobile" />
         <Button Text="Set data Cookie"
-               Clicked="SetCookieClicked" />
+                Clicked="SetCookieClicked" />
         <Button Text="Refresh"
                 Clicked="OnRefreshPageClicked" />
 
-       <!-- <Button Text="Get data Cookie"
+        <!-- <Button Text="Get data Cookie"
                 HorizontalOptions="End"
                 Clicked="GetCookieClicked" />
         <Button Text="Get all Cookies"

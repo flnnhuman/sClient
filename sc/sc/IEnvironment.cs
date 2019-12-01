@@ -7,5 +7,9 @@ namespace sc
         Task<Theme> GetOperatingSystemTheme();
     }
 
-    public enum Theme { Light, Dark }
+    public enum Theme
+    {
+        Light,
+        Dark
+    }
 }

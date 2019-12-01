@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Reflection;
 using Xamarin.Essentials;
-using Xamarin.Forms;
 
 namespace sc
 {
-    public class SharedInfo
+    public static class SharedInfo
     {
         internal const string AssemblyName = "SClient";
         internal const string GithubRepo = "flnnhuman/" + AssemblyName;
@@ -22,9 +20,8 @@ namespace sc
         internal const string GlobalConfigFileName = SC + JsonConfigExtension;
         internal const string GlobalDatabaseFileName = SC + DatabaseExtension;
 
-        internal static Version Version =>Version.Parse(AppInfo.VersionString);
-        
-        internal static string PublicIdentifier => AssemblyName;
+        internal static Version Version => Version.Parse(AppInfo.VersionString);
 
+        internal static string PublicIdentifier => AssemblyName;
     }
 }

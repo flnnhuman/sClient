@@ -10,28 +10,28 @@
             <ContentPage.Content>
                 <StackLayout Padding="5,30,5,5">
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-                       <Image WidthRequest="64" HeightRequest="64" Aspect="AspectFit" Source="steam_icon.png" VerticalOptions="Center"></Image>
-                        <Label Text ="Steam" VerticalOptions="Center"></Label>
+                       <Image WidthRequest="64" HeightRequest="64" Aspect="AspectFit" Source="steam_icon.png" VerticalOptions="Center" />
+                       <Label Text ="Steam" VerticalOptions="Center" />
                     </StackLayout>
 
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="message_icon.png"></Image>  
-                        <Button Text="Friends" Clicked="FriendsPage" BackgroundColor="Transparent" BorderColor="Transparent"></Button>
+                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="message_icon.png" />
+                        <Button Text="Friends" Clicked="FriendsPage" BackgroundColor="Transparent" BorderColor="Transparent" />
                     </StackLayout>
                     
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="shopping_cart.png"></Image>  
-                        <Button Text="Store" Clicked="StorePage" BackgroundColor="Transparent" BorderColor="Transparent"></Button>
+                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="shopping_cart.png" />
+                        <Button Text="Store" Clicked="StorePage" BackgroundColor="Transparent" BorderColor="Transparent" />
                     </StackLayout>
                     
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="community.png"></Image>  
-                        <Button Text="Community" Clicked="CommunityPage" BackgroundColor="Transparent" BorderColor="Transparent"></Button>
+                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="community.png" />
+                        <Button Text="Community" Clicked="CommunityPage" BackgroundColor="Transparent" BorderColor="Transparent" />
                     </StackLayout>
                     
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="user_icon.png"></Image>  
-                        <Button Text="My profile" Clicked="ProfilePage" BackgroundColor="Transparent" BorderColor="Transparent"></Button>
+                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="user_icon.png" />
+                        <Button Text="My profile" Clicked="ProfilePage" BackgroundColor="Transparent" BorderColor="Transparent" />
                     </StackLayout>
                     
                 </StackLayout>
@@ -42,7 +42,7 @@
     <MasterDetailPage.Detail>
         <ContentPage>
             <ContentPage.Content>
-            <Label Text="DetailPage" VerticalOptions="Center" HorizontalOptions="Center"></Label>    
+            <Label Text="DetailPage" VerticalOptions="Center" HorizontalOptions="Center" />
             </ContentPage.Content>
         </ContentPage>
     </MasterDetailPage.Detail>

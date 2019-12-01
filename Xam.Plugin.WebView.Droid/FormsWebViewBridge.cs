@@ -1,13 +1,13 @@
-﻿using Android.Webkit;
+﻿using System;
+using Android.Webkit;
 using Java.Interop;
-using System;
+using Object = Java.Lang.Object;
 
 namespace Xam.Plugin.WebView.Droid
 {
-    public class FormsWebViewBridge : Java.Lang.Object
+    public class FormsWebViewBridge : Object
     {
-
-        readonly WeakReference<FormsWebViewRenderer> Reference;
+        private readonly WeakReference<FormsWebViewRenderer> Reference;
 
         public FormsWebViewBridge(FormsWebViewRenderer renderer)
         {

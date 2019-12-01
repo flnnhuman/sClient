@@ -1,164 +1,181 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SteamKit2;
-using SteamKit2.Discovery;
 
-namespace sc {
-	public class sc {
-		public static Bot bot;
+namespace sc
+{
+    public static class sc
+    {
+        public static Bot bot;
 
-	
-		public static mainpage1 Mainpage1= new mainpage1();
-		
-		public static readonly Logger Logger = new Logger(nameof(sc));
-		public static SteamFriends.FriendMsgHistoryCallback MsgHistory;
-		public static GlobalConfig GlobalConfig { get; private set; }
-		public static GlobalDatabase GlobalDatabase { get; private set; }
-		public static WebBrowser WebBrowser { get; internal set; }
-		internal static string GetFilePath(Bot.EFileType fileType) {
-			if (!Enum.IsDefined(typeof(Bot.EFileType), fileType)) {
-				Logger.LogNullError(nameof(fileType));
 
-				return null;
-			}
+        public static mainpage1 Mainpage1 = new mainpage1();
 
-			switch (fileType) {
-				case Bot.EFileType.Config:
-					return Path.Combine(MainPage.MainDir,SharedInfo.ConfigDirectory, SharedInfo.GlobalConfigFileName);
-				case Bot.EFileType.Database:
-					return Path.Combine(MainPage.MainDir,SharedInfo.ConfigDirectory, SharedInfo.GlobalDatabaseFileName);
-				default:
-					Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(fileType), fileType));
+        public static readonly Logger Logger = new Logger(nameof(sc));
+        public static SteamFriends.FriendMsgHistoryCallback MsgHistory;
+        public static GlobalConfig GlobalConfig { get; private set; }
+        public static GlobalDatabase GlobalDatabase { get; private set; }
+        public static WebBrowser WebBrowser { get; internal set; }
 
-					return null;
-			}
-		}
+        internal static string GetFilePath(Bot.EFileType fileType)
+        {
+            if (!Enum.IsDefined(typeof(Bot.EFileType), fileType))
+            {
+                Logger.LogNullError(nameof(fileType));
 
-		internal static async Task Init() {
-			WebBrowser = new WebBrowser(Logger,  true);
-			//await RegisterBots().ConfigureAwait(false);
+                return null;
+            }
 
-			string globalDatabaseFile = Path.Combine(MainPage.MainDir,sc.GetFilePath(Bot.EFileType.Database));
+            switch (fileType)
+            {
+                case Bot.EFileType.Config:
+                    return Path.Combine(MainPage.MainDir, SharedInfo.ConfigDirectory, SharedInfo.GlobalConfigFileName);
+                case Bot.EFileType.Database:
+                    return Path.Combine(MainPage.MainDir, SharedInfo.ConfigDirectory,
+                        SharedInfo.GlobalDatabaseFileName);
+                default:
+                    Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(fileType),
+                        fileType));
 
-			if (string.IsNullOrEmpty(globalDatabaseFile)) {
-				sc.Logger.LogNullError(nameof(globalDatabaseFile));
+                    return null;
+            }
+        }
 
-				return;
-			}
-			
-			GlobalDatabase globalDatabase = GlobalDatabase.CreateOrLoad(globalDatabaseFile);
+        internal static async Task Init()
+        {
+            WebBrowser = new WebBrowser(Logger, true);
+            //await RegisterBots().ConfigureAwait(false);
 
-			if (globalDatabase == null) {
-				sc.Logger.LogGenericError(string.Format(Strings.ErrorDatabaseInvalid, globalDatabaseFile));
-				await Task.Delay(5 * 1000).ConfigureAwait(false);
-				//await Exit(1).ConfigureAwait(false);
+            var globalDatabaseFile = Path.Combine(MainPage.MainDir, GetFilePath(Bot.EFileType.Database));
 
-				return;
-			}
+            if (string.IsNullOrEmpty(globalDatabaseFile))
+            {
+                Logger.LogNullError(nameof(globalDatabaseFile));
 
-			sc.InitGlobalDatabase(globalDatabase);
-			if (Debugging.IsUserDebugging) {
-				if (Debugging.IsDebugConfigured) {
-					sc.Logger.LogGenericDebug(globalDatabaseFile + ": " + JsonConvert.SerializeObject(sc.GlobalDatabase, Formatting.Indented));
-				}
+                return;
+            }
 
-				//todo Logging.EnableTraceLogging();
+            GlobalDatabase globalDatabase = GlobalDatabase.CreateOrLoad(globalDatabaseFile);
 
-				DebugLog.AddListener(new Debugging.DebugListener());
-				DebugLog.Enabled = true;
+            if (globalDatabase == null)
+            {
+                Logger.LogGenericError(string.Format(Strings.ErrorDatabaseInvalid, globalDatabaseFile));
+                await Task.Delay(5 * 1000).ConfigureAwait(false);
+                //await Exit(1).ConfigureAwait(false);
 
-				if (Directory.Exists(Path.Combine(MainPage.MainDir,SharedInfo.DebugDirectory))){
-					try {
-						Directory.Delete(Path.Combine(MainPage.MainDir,SharedInfo.DebugDirectory), true);
-						await Task.Delay(1000).ConfigureAwait(false); // Dirty workaround giving Windows some time to sync
-					} catch (Exception e) {
-						sc.Logger.LogGenericException(e);
-					}
-				}
+                return;
+            }
 
-				try {
-					Directory.CreateDirectory(Path.Combine(MainPage.MainDir,SharedInfo.DebugDirectory));
-				} catch (Exception e) {
-					sc.Logger.LogGenericException(e);
-				}
-			}
+            InitGlobalDatabase(globalDatabase);
+            if (Debugging.IsUserDebugging)
+            {
+                if (Debugging.IsDebugConfigured)
+                    Logger.LogGenericDebug(globalDatabaseFile + ": " +
+                                           JsonConvert.SerializeObject(GlobalDatabase, Formatting.Indented));
 
-			WebBrowser.Init();
-		}
+                //todo Logging.EnableTraceLogging();
 
-		/*internal async void RegisterServers()
-		{
-			IEnumerable<ServerRecord> servers =
-				await GlobalDatabase.ServerListProvider.FetchServerListAsync().ConfigureAwait(false);
+                DebugLog.AddListener(new Debugging.DebugListener());
+                DebugLog.Enabled = true;
 
-			if (servers?.Any() != true)
-			{
-				Logger.LogGenericInfo(string.Format(Strings.Initializing, nameof(SteamDirectory)));
+                if (Directory.Exists(Path.Combine(MainPage.MainDir, SharedInfo.DebugDirectory)))
+                    try
+                    {
+                        Directory.Delete(Path.Combine(MainPage.MainDir, SharedInfo.DebugDirectory), true);
+                        await Task.Delay(1000)
+                            .ConfigureAwait(false); // Dirty workaround giving Windows some time to sync
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogGenericException(e);
+                    }
 
-				SteamConfiguration steamConfiguration = SteamConfiguration.Create(builder =>
-					builder.WithProtocolTypes(GlobalConfig.SteamProtocols).WithCellID(GlobalDatabase.CellID)
-						.WithServerListProvider(GlobalDatabase.ServerListProvider)
-						.WithHttpClientFactory(() => WebBrowser.GenerateDisposableHttpClient()));
+                try
+                {
+                    Directory.CreateDirectory(Path.Combine(MainPage.MainDir, SharedInfo.DebugDirectory));
+                }
+                catch (Exception e)
+                {
+                    Logger.LogGenericException(e);
+                }
+            }
 
-				try
-				{
-					await SteamDirectory.LoadAsync(steamConfiguration).ConfigureAwait(false);
-					Logger.LogGenericInfo(Strings.Success);
-				}
-				catch
-				{
-					Logger.LogGenericWarning(Strings.BotSteamDirectoryInitializationFailed);
-					await Task.Delay(5000).ConfigureAwait(false);
-				}
+            WebBrowser.Init();
+        }
 
-			}
-		}
-		 */
-		internal static void InitGlobalConfig(GlobalConfig globalConfig) {
-			if (globalConfig == null) {
-				Logger.LogNullError(nameof(globalConfig));
+        /*internal async void RegisterServers()
+        {
+            IEnumerable<ServerRecord> servers =
+                await GlobalDatabase.ServerListProvider.FetchServerListAsync().ConfigureAwait(false);
 
-				return;
-			}
+            if (servers?.Any() != true)
+            {
+                Logger.LogGenericInfo(string.Format(Strings.Initializing, nameof(SteamDirectory)));
 
-			if (GlobalConfig != null) {
-				return;
-			}
+                SteamConfiguration steamConfiguration = SteamConfiguration.Create(builder =>
+                    builder.WithProtocolTypes(GlobalConfig.SteamProtocols).WithCellID(GlobalDatabase.CellID)
+                        .WithServerListProvider(GlobalDatabase.ServerListProvider)
+                        .WithHttpClientFactory(() => WebBrowser.GenerateDisposableHttpClient()));
 
-			GlobalConfig = globalConfig;
-		}
+                try
+                {
+                    await SteamDirectory.LoadAsync(steamConfiguration).ConfigureAwait(false);
+                    Logger.LogGenericInfo(Strings.Success);
+                }
+                catch
+                {
+                    Logger.LogGenericWarning(Strings.BotSteamDirectoryInitializationFailed);
+                    await Task.Delay(5000).ConfigureAwait(false);
+                }
 
-		internal static void InitGlobalDatabase(GlobalDatabase globalDatabase) {
-			if (globalDatabase == null) {
-				Logger.LogNullError(nameof(globalDatabase));
+            }
+        }
+         */
+        internal static void InitGlobalConfig(GlobalConfig globalConfig)
+        {
+            if (globalConfig == null)
+            {
+                Logger.LogNullError(nameof(globalConfig));
 
-				return;
-			}
+                return;
+            }
 
-			if (GlobalDatabase != null) {
-				return;
-			}
+            if (GlobalConfig != null) return;
 
-			GlobalDatabase = globalDatabase;
-		}
+            GlobalConfig = globalConfig;
+        }
 
-		internal static void InitializeGlobalConfigAndDatabase() {
-			InitGlobalConfig(GlobalConfig.CreateOrLoad(Path.Combine(MainPage.MainDir, "config.json")));
-			InitGlobalDatabase(GlobalDatabase.CreateOrLoad(Path.Combine(MainPage.MainDir, "db.json")));
-		}
+        internal static void InitGlobalDatabase(GlobalDatabase globalDatabase)
+        {
+            if (globalDatabase == null)
+            {
+                Logger.LogNullError(nameof(globalDatabase));
 
-		internal enum EUserInputType : byte {
-			Unknown,
-			DeviceID,
-			Login,
-			Password,
-			SteamGuard,
-			SteamParentalCode,
-			TwoFactorAuthentication
-		}
-	}
+                return;
+            }
+
+            if (GlobalDatabase != null) return;
+
+            GlobalDatabase = globalDatabase;
+        }
+
+        internal static void InitializeGlobalConfigAndDatabase()
+        {
+            InitGlobalConfig(GlobalConfig.CreateOrLoad(Path.Combine(MainPage.MainDir, "config.json")));
+            InitGlobalDatabase(GlobalDatabase.CreateOrLoad(Path.Combine(MainPage.MainDir, "db.json")));
+        }
+
+        internal enum EUserInputType : byte
+        {
+            Unknown,
+            DeviceID,
+            Login,
+            Password,
+            SteamGuard,
+            SteamParentalCode,
+            TwoFactorAuthentication
+        }
+    }
 }

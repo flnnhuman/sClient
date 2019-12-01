@@ -16,11 +16,10 @@ namespace sc {
 			Success
 		}
 
-		
-		
+
 		public static readonly string CacheDir = FileSystem.CacheDirectory;
 		public static readonly string MainDir = FileSystem.AppDataDirectory;
-		
+
 		public MainPage() {
 			InitializeComponent();
 			sc.InitializeGlobalConfigAndDatabase();
@@ -29,7 +28,7 @@ namespace sc {
 
 		public string Login => LoginField.Text;
 		public string Password => PasswordField.Text;
-		
+
 		private async void Button_OnClicked(object sender, EventArgs e) {
 			ThreadPool.QueueUserWorkItem(o => {
 				//bot = new Bot("bot", BotConfig, BotDatabase);
@@ -38,6 +37,7 @@ namespace sc {
 				sc.bot.InitStart();
 			});
 		}
+
 		private void Button2_OnClicked(object sender, EventArgs e) {
 			Toast(sc.bot.SteamID.ToString(),EToastType.Message);
 		}
@@ -60,6 +60,7 @@ namespace sc {
 				}
 			});
 		}
+
 		internal static async Task RegisterBot(string botName) {
 			if (string.IsNullOrEmpty(botName)) {
 				sc.Logger.LogNullError(nameof(botName));
@@ -137,6 +138,5 @@ namespace sc {
 			await sc.bot.InitModules().ConfigureAwait(false);
 			sc.bot.InitStart();
 		}
-
 	}
 }
