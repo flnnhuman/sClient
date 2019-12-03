@@ -7,28 +7,16 @@
     <e p="C:\Users\pesec\RiderProjects\sClient" t="IncludeFlat">
       <e p="packages" t="ExcludeRecursive" />
       <e p="sc\sc" t="IncludeRecursive">
-        <e p="App.xaml" t="Include" />
-        <e p="App.xaml.cs" t="Include" />
         <e p="bin" t="ExcludeRecursive" />
         <e p="BotConfig.cs" t="Include" />
         <e p="BotDatabase.cs" t="Include" />
-        <e p="ChatPage.xaml" t="Include" />
-        <e p="ChatPage.xaml.cs" t="Include" />
         <e p="Debugging.cs" t="Include" />
         <e p="Events.cs" t="Include" />
-        <e p="Friends.xaml" t="Include" />
-        <e p="Friends.xaml.cs" t="Include" />
         <e p="GlobalConfig.cs" t="Include" />
         <e p="GlobalDatabase.cs" t="Include" />
         <e p="Helpers.cs" t="Include" />
         <e p="IEnvironment.cs" t="Include" />
         <e p="Logger.cs" t="Include" />
-        <e p="MainPage.xaml" t="Include" />
-        <e p="MainPage.xaml.cs" t="Include" />
-        <e p="mainpage1.xaml" t="Include" />
-        <e p="mainpage1.xaml.cs" t="Include" />
-        <e p="MasterPage.xaml" t="Include" />
-        <e p="MasterPage.xaml.cs" t="Include" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
             <e p="netstandard2.0" t="Include">
@@ -36,18 +24,32 @@
             </e>
           </e>
         </e>
+        <e p="Pages" t="Include">
+          <e p="App.xaml" t="Include" />
+          <e p="App.xaml.cs" t="Include" />
+          <e p="ChatPage.xaml" t="Include" />
+          <e p="ChatPage.xaml.cs" t="Include" />
+          <e p="Friends.xaml" t="Include" />
+          <e p="Friends.xaml.cs" t="Include" />
+          <e p="MainPage.xaml" t="Include" />
+          <e p="MainPage.xaml.cs" t="Include" />
+          <e p="mainpage1.xaml" t="Include" />
+          <e p="mainpage1.xaml.cs" t="Include" />
+          <e p="second page.xaml" t="Include" />
+          <e p="second page.xaml.cs" t="Include" />
+        </e>
+        <e p="Resources" t="Include">
+          <e p="Strings.Designer.cs" t="Include" />
+          <e p="Strings.resx" t="Include" />
+        </e>
         <e p="RuntimeCompability.cs" t="Include" />
         <e p="sc.cs" t="Include" />
         <e p="sc.csproj" t="IncludeRecursive" />
         <e p="sc.csproj.DotSettings" t="Include" />
         <e p="SCHandler.cs" t="Include" />
-        <e p="second page.xaml" t="Include" />
-        <e p="second page.xaml.cs" t="Include" />
         <e p="SerializableFile.cs" t="Include" />
         <e p="SharedInfo.cs" t="Include" />
         <e p="Steam.cs" t="Include" />
-        <e p="Strings.Designer.cs" t="Include" />
-        <e p="Strings.resx" t="Include" />
         <e p="Utilities.cs" t="Include" />
         <e p="WebBrowser.cs" t="Include" />
         <e p="WebHandler.cs" t="Include" />

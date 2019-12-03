@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/.idea.sc/Xam.Plugin.WebView.Droid.iml" filepath="$PROJECT_DIR$/.idea/.idea.sc/Xam.Plugin.WebView.Droid.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/.idea.sc/riderModule.iml" filepath="$PROJECT_DIR$/.idea/.idea.sc/riderModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/.idea.sc/sc.Android.iml" filepath="$PROJECT_DIR$/.idea/.idea.sc/sc.Android.iml" />
     </modules>
