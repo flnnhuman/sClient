@@ -38,10 +38,6 @@
           <e p="second page.xaml" t="Include" />
           <e p="second page.xaml.cs" t="Include" />
         </e>
-        <e p="Resources" t="Include">
-          <e p="Strings.Designer.cs" t="Include" />
-          <e p="Strings.resx" t="Include" />
-        </e>
         <e p="RuntimeCompability.cs" t="Include" />
         <e p="sc.cs" t="Include" />
         <e p="sc.csproj" t="IncludeRecursive" />
@@ -50,6 +46,8 @@
         <e p="SerializableFile.cs" t="Include" />
         <e p="SharedInfo.cs" t="Include" />
         <e p="Steam.cs" t="Include" />
+        <e p="Strings.Designer.cs" t="Include" />
+        <e p="Strings.resx" t="Include" />
         <e p="Utilities.cs" t="Include" />
         <e p="WebBrowser.cs" t="Include" />
         <e p="WebHandler.cs" t="Include" />
