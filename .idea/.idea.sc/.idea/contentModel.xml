@@ -54,6 +54,8 @@
         <e p="Pages" t="Include">
           <e p="App.xaml" t="Include" />
           <e p="App.xaml.cs" t="Include" />
+          <e p="CameraPAge.xaml" t="Include" />
+          <e p="CameraPAge.xaml.cs" t="Include" />
           <e p="ChatPage.xaml" t="Include" />
           <e p="ChatPage.xaml.cs" t="Include" />
           <e p="Friends.xaml" t="Include" />
@@ -110,6 +112,9 @@
           <e p="values" t="Include">
             <e p="colors.xml" t="Include" />
             <e p="styles.xml" t="Include" />
+          </e>
+          <e p="xml" t="Include">
+            <e p="file_paths.xml" t="Include" />
           </e>
         </e>
         <e p="sc.Android.csproj" t="IncludeRecursive" />

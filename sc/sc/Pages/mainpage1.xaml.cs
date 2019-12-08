@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -83,6 +83,11 @@ namespace sc
             else SecondPage.Source = uri;
 
             Detail = new NavigationPage(SecondPage);
+            IsPresented = false;
+        }
+        private void CameraPage(object sender, EventArgs e)
+        {
+            Detail = new NavigationPage(new CameraPage());
             IsPresented = false;
         }
     }
