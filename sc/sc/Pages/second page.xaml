@@ -5,7 +5,6 @@
              x:Class="sc.second_page">
     <StackLayout Orientation="Vertical">
         <abstractions:FormsWebView x:Name="localContent"
-                                   x:FieldModifier="internal"
                                    VerticalOptions="FillAndExpand"
                                    HorizontalOptions="FillAndExpand"
                                    Source="https://store.steampowered.com/mobile" />

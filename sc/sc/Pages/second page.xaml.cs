@@ -28,23 +28,23 @@ namespace sc
         private async void SetCookieClicked(object sender, EventArgs e)
         {
             if (sc.bot == null) sc.Logger.LogNullError(nameof(sc.bot.WebHandler.WebBrowser.Cookies));
-            foreach (MyCookie myCookie in sc.bot.WebHandler.WebBrowser.Cookies)
-            {
-                DateTime expiresDate = DateTime.Now;
-                expiresDate = expiresDate.AddDays(30);
-
-                var cookie = new Cookie
+            else
+                foreach (MyCookie myCookie in sc.bot.WebHandler.WebBrowser.Cookies)
                 {
-                    Name = myCookie.Name,
-                    Value = myCookie.Value,
-                    Domain = new Uri(localContent.Source).Host,
-                    Expired = false,
-                    Expires = expiresDate,
-                    Path = "/"
-                };
+                    DateTime expiresDate = DateTime.Now;
+                    expiresDate = expiresDate.AddDays(30);
 
-                var str = await localContent.SetCookieAsync(cookie);
-            }
+                    var cookie = new Cookie
+                    {
+                        Name = myCookie.Name,
+                        Value = myCookie.Value,
+                        Domain = new Uri(localContent.Source).Host,
+                        Expired = false,
+                        Expires = expiresDate,
+                        Path = "/"
+                    };
+                    await localContent.SetCookieAsync(cookie);
+                }
         }
 
         private async void GetCookieClicked(object sender, EventArgs e)

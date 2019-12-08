@@ -3,8 +3,6 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="sc.Friends"
-             xmlns:ff="clr-namespace:FFImageLoading;assembly=FFImageLoading.Forms"
-             xmlns:ffsvg="clr-namespace:FFImageLoading;assembly=FFImageLoading.Svg.Forms"
              xmlns:forms="clr-namespace:FFImageLoading.Forms;assembly=FFImageLoading.Forms">
     <StackLayout>
         <ListView ItemsSource="{Binding FriendList}"
@@ -30,7 +28,8 @@
                                                WidthRequest="60" Source="{Binding avatarUrl}" />
 
 
-                            <Label Grid.Column="1"
+                            <Label Grid.Row="0"
+                                   Grid.Column="1"
                                    Text="{Binding Nickname}"
                                    FontAttributes="Bold" />
                             <Label Grid.Row="1"

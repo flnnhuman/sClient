@@ -307,7 +307,7 @@ namespace Xam.Plugin.WebView.Droid
             {
                 Device.BeginInvokeOnMainThread(() => Control.EvaluateJavascript(js, _callback));
             }
-            catch (ObjectDisposedException)
+            catch (System.ObjectDisposedException e)
             {
             }
 
