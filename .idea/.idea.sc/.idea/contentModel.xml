@@ -2,10 +2,37 @@
 <project version="4">
   <component name="ContentModelStore">
     <e p="C:\Program Files (x86)\Android\android-sdk\platforms\android-28\data\res" t="IncludeRecursive" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.arch.lifecycle.runtime\1.1.1.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.arch.lifecycle.viewmodel\1.1.1.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.animated.vector.drawable\28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.compat\28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.coordinaterlayout\28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.design\28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.media.compat\28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.transition\28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.v7.appcompat\28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.v7.recyclerview\28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.versionedparcelable\28.0.0.3\proguard\monoandroid90" t="Include">
+      <e p="proguard.txt" t="Include" />
+    </e>
     <e p="C:\Users\pesec\.Rider2019.2\system\extResources" t="IncludeRecursive" />
     <e p="C:\Users\pesec\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_sc.-1768076253.00" t="ExcludeRecursive" />
     <e p="C:\Users\pesec\RiderProjects\sClient" t="IncludeFlat">
-      <e p="packages" t="ExcludeRecursive" />
+      <e p="packages" t="ExcludeRecursive">
+        <e p="Xamarin.Android.Arch.Lifecycle.Runtime.1.1.1.3\proguard\monoandroid90" t="Include">
+          <e p="proguard.txt" t="Include" />
+        </e>
+        <e p="Xamarin.Android.Arch.Lifecycle.ViewModel.1.1.1.3\proguard\monoandroid90\proguard.txt" t="Include" />
+        <e p="Xamarin.Android.Support.Animated.Vector.Drawable.28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+        <e p="Xamarin.Android.Support.Compat.28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+        <e p="Xamarin.Android.Support.CoordinaterLayout.28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+        <e p="Xamarin.Android.Support.Design.28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+        <e p="Xamarin.Android.Support.Media.Compat.28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+        <e p="Xamarin.Android.Support.Transition.28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+        <e p="Xamarin.Android.Support.v7.AppCompat.28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+        <e p="Xamarin.Android.Support.v7.RecyclerView.28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+        <e p="Xamarin.Android.Support.VersionedParcelable.28.0.0.3\proguard\monoandroid90\proguard.txt" t="Include" />
+      </e>
       <e p="sc\sc" t="IncludeRecursive">
         <e p="bin" t="ExcludeRecursive" />
         <e p="BotConfig.cs" t="Include" />
