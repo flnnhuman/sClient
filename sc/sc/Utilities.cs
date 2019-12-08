@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Humanizer;
@@ -91,6 +92,19 @@ namespace sc
         public static string ToHumanReadable(this TimeSpan timeSpan)
         {
             return timeSpan.Humanize(3, maxUnit: TimeUnit.Year, minUnit: TimeUnit.Second);
+        }
+        public static string ByteArrayToHexString(byte[] Bytes)
+        {
+            var Result = new StringBuilder(Bytes.Length * 2);
+            var HexAlphabet = "0123456789ABCDEF";
+
+            foreach (var B in Bytes)
+            {
+                Result.Append(HexAlphabet[B >> 4]);
+                Result.Append(HexAlphabet[B & 0xF]);
+            }
+
+            return Result.ToString();
         }
     }
 }

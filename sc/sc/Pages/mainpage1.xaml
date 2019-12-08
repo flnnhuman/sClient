@@ -1,19 +1,25 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <MasterDetailPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:forms="clr-namespace:FFImageLoading.Forms;assembly=FFImageLoading.Forms"
              x:Class="sc.mainpage1"
              Title="MasterApp">
   
     <MasterDetailPage.Master>
         <ContentPage Title="Master" BackgroundColor="Default">
             <ContentPage.Content>
+                <StackLayout>
+                <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand" BackgroundColor="MidnightBlue" Padding="20,30,10,30">
+                   
+                    <forms:CachedImage
+                        x:Name="AvatarImage"
+                        Aspect="AspectFit"
+                        HeightRequest="64"
+                        WidthRequest="64" Source="{Binding avatarUrl}" />
+                    <Label Text ="{Binding Nickname}" FontSize="Large" VerticalOptions="Center" TextColor="White" />
+                </StackLayout>
                 <StackLayout Padding="5,30,5,5">
-                    <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-                       <Image WidthRequest="64" HeightRequest="64" Aspect="AspectFit" Source="steam_icon.png" VerticalOptions="Center" />
-                       <Label Text ="Steam" VerticalOptions="Center" />
-                    </StackLayout>
-
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
                         <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="message_icon.png" />
                         <Button Text="Friends" Clicked="FriendsPage" BackgroundColor="Transparent" BorderColor="Transparent" />

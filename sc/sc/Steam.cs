@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -20,6 +20,19 @@ using Xamarin.Forms;
 
 namespace sc
 {
+    public class Avatar : INotifyPropertyChanged
+    {
+        public string avatarUrl { get; set; } = null;
+        [JsonProperty]
+        public string AvatarHash;
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void OnPropertyChanged([CallerMemberName]string prop = "")
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(prop));
+        }
+    }
+    
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     internal enum EUserInputType : byte
     {
@@ -35,6 +48,7 @@ namespace sc
 
     public class Bot
     {
+        public Avatar Avatar = new Avatar();
         internal const ushort CallbackSleep = 500; // In milliseconds
         private const ushort MaxMessageLength = 5000; // This is a limitation enforced by Steam
         private const byte MaxTwoFactorCodeFailures = 3;
@@ -77,9 +91,6 @@ namespace sc
 
         private string AuthCode;
 
-#pragma warning disable IDE0052
-        [JsonProperty] private string AvatarHash;
-#pragma warning restore IDE0052
         private Timer ConnectionFailureTimer;
 
         private string DeviceID;
@@ -195,6 +206,7 @@ namespace sc
 
         public BotConfig BotConfig { get; }
 
+        public string avatarUrl => Avatar.avatarUrl;
         internal bool PlayingWasBlocked { get; private set; }
         public ulong SteamID { get; private set; }
 
@@ -316,7 +328,7 @@ namespace sc
         public async Task InitModules()
         {
             AccountFlags = EAccountFlags.NormalUser;
-            AvatarHash = Nickname = null;
+            Avatar.AvatarHash = Nickname = null;
             WalletBalance = 0;
             WalletCurrency = ECurrencyCode.Invalid;
 
@@ -781,7 +793,7 @@ namespace sc
 
                     /*await PluginsCore.OnBotLoggedOn(this).ConfigureAwait(false);*/
                     Device.BeginInvokeOnMainThread(() => Application.Current.MainPage = sc.Mainpage1);
-
+                    RequestPersonaStateUpdate();
                     break;
                 case EResult.InvalidPassword:
                 case EResult.NoConnection:
@@ -966,24 +978,21 @@ namespace sc
                 return;
             }
 
-            var friendCount = SteamFriends.GetFriendCount();
-            for (var x = 0; x < friendCount; x++)
-            {
-                // steamids identify objects that exist on the steam network, such as friends, as an example
-                SteamID steamIdFriend = SteamFriends.GetFriendByIndex(x);
-
-                // we'll just display the STEAM_ rendered version
-                Debug.WriteLine("Friend: {0}", steamIdFriend.Render());
+            int RequestRecipient = 0;
+            foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList.Where(friend => friend.Relationship == EFriendRelationship.Friend)) {
+                RequestPersonaStateUpdate(friend.SteamID);
             }
-
-            var count = callback.FriendList.Count(friend =>
-                friend.Relationship == EFriendRelationship.RequestRecipient);
-            if (count > 0)
+            
+            foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList.Where(friend => friend.Relationship == EFriendRelationship.RequestRecipient))
+            {
+                RequestRecipient++;
+            }
+            if (RequestRecipient > 0)
             {
                 var acceptFriendRequest = await UserDialogs.Instance.ConfirmAsync(new ConfirmConfig
                 {
                     Message = "Accept this request?",
-                    Title = $"you have {count} friend request{(count > 1 ? "" : "s")}, do you want to check?",
+                    Title = $"you have {RequestRecipient} friend request{(RequestRecipient > 1 ? "" : "s")}, do you want to check?",
                     CancelText = "Ignore",
                     OkText = "Accept"
                 });
@@ -991,27 +1000,7 @@ namespace sc
             }
 
 
-            foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList.Where(friend =>
-                    friend.Relationship == EFriendRelationship.RequestRecipient))
-                //todo linq
-                switch (friend.SteamID.AccountType)
-                {
-                    //case EAccountType.Clan:
-                    //	bool acceptGroupRequest = await PluginsCore.OnBotFriendRequest(this, friend.SteamID).ConfigureAwait(false);
-                    //
-                    //	if (acceptGroupRequest) {
-                    //		SCHandler.AcknowledgeClanInvite(friend.SteamID, true);
-                    //		await JoinMasterChatGroupID().ConfigureAwait(false);
-                    //
-                    //		break;
-                    //	}
-                    //
-                    //	if (BotConfig.BotBehaviour.HasFlag(BotConfig.EBotBehaviour.RejectInvalidGroupInvites)) {
-                    //		SCHandler.AcknowledgeClanInvite(friend.SteamID, false);
-                    //	}
-                    //
-                    //	break;
-                }
+           
         }
 
         private async void OnServiceMethod(SteamUnifiedMessages.ServiceMethodNotification notification)
@@ -1124,7 +1113,40 @@ namespace sc
                 return;
             }
 
-            if (callback.FriendID != SteamID) return;
+            if (callback.FriendID != SteamID)
+            {
+                bool exists =sc.Mainpage1.Friends.FriendList.Exists(friend1 =>(friend1.steamID == callback.FriendID));
+                bool isFriend = SteamFriends.GetFriendRelationship(callback.FriendID) == EFriendRelationship.Friend;
+                if (!exists && isFriend)
+                {
+                    sc.Mainpage1.Friends.FriendList.Add(new Friend(callback.FriendID,callback.AvatarHash,callback.Name,callback.State)); 
+                    return;
+                }
+
+                if (exists && isFriend)
+                {
+                    int index = sc.Mainpage1.Friends.FriendList.FindIndex(friend1 =>
+                        (friend1.steamID == callback.FriendID));
+                    
+                    if (sc.Mainpage1.Friends.FriendList[index].Nickname !=callback.Name)
+                    {
+                        sc.Mainpage1.Friends.FriendList[index].Nickname = callback.Name;
+                    }
+                    if (sc.Mainpage1.Friends.FriendList[index].OnlineStatus !=callback.State)
+                    {
+                        sc.Mainpage1.Friends.FriendList[index].OnlineStatus = callback.State;
+                    }
+                    if (sc.Mainpage1.Friends.FriendList[index].AvatarHash !=callback.AvatarHash)
+                    {
+                        sc.Mainpage1.Friends.FriendList[index].AvatarHash = callback.AvatarHash;
+                    }
+                    
+                    
+                    return;
+                }
+                return;
+                
+            }
 
             string avatarHash = null;
 
@@ -1137,8 +1159,12 @@ namespace sc
                     avatarHash = null;
             }
 
-            AvatarHash = avatarHash;
+            Avatar.AvatarHash = avatarHash;
             Nickname = callback.Name;
+            Avatar.avatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
+                        avatarHash.Substring(0, 2).ToLower() + "/" +
+                        avatarHash.ToLower() + "_full.jpg";
+            sc.Mainpage1.BindingContext = this; 
         }
 
         private void OnMessageReceived(SteamFriends.FriendMsgCallback callback)
@@ -1259,7 +1285,16 @@ namespace sc
             if (!IsConnectedAndLoggedOn) return;
 
             SteamFriends.RequestFriendInfo(SteamID,
-                EClientPersonaStateFlag.PlayerName | EClientPersonaStateFlag.Presence);
+                EClientPersonaStateFlag.PlayerName | EClientPersonaStateFlag.Presence | EClientPersonaStateFlag.Status);
+        }
+        
+        internal void RequestPersonaStateUpdate(SteamID steamID)
+        {
+            if (!IsConnectedAndLoggedOn) return;
+
+            
+            SteamFriends.RequestFriendInfo(steamID,
+                EClientPersonaStateFlag.PlayerName | EClientPersonaStateFlag.Presence | EClientPersonaStateFlag.Status | EClientPersonaStateFlag.GameExtraInfo);
         }
 
         private void ResetPlayingWasBlockedWithTimer()

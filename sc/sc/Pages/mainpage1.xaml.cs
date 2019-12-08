@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -8,11 +8,13 @@ namespace sc
     public partial class mainpage1 : MasterDetailPage
     {
         public second_page SecondPage;
-
+        public Friends Friends;
+        
         public mainpage1()
         {
             InitializeComponent();
             SecondPage = new second_page();
+            Friends=new Friends();
             Detail = new NavigationPage(SecondPage);
         }
 
@@ -49,7 +51,7 @@ namespace sc
 
         private void FriendsPage(object sender, EventArgs e)
         {
-            Detail = new NavigationPage(new Friends());
+            Detail = new NavigationPage(Friends);
             IsPresented = false;
         }
 

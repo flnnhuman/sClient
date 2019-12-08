@@ -1,10 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Threading.Tasks;
 using SteamKit2;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
+using System.Runtime.CompilerServices;
 
 namespace sc
 {
@@ -15,21 +17,10 @@ namespace sc
         {
             InitializeComponent();
             FriendList = new List<Friend>();
-            FriendCycle:
-            if (sc.bot == null)
-            {
-                Task.Delay(TimeSpan.FromSeconds(1));
-                goto FriendCycle;
-            }
-
-            for (var index = 0; index < sc.bot.SteamFriends.GetFriendCount(); index++)
-                if (sc.bot.SteamFriends.GetFriendRelationship(sc.bot.SteamFriends.GetFriendByIndex(index)) ==
-                    EFriendRelationship.Friend)
-                    FriendList.Add(new Friend(sc.bot.SteamFriends.GetFriendByIndex(index)));
             BindingContext = this;
         }
 
-        public IList<Friend> FriendList { get; }
+        public List<Friend> FriendList { get; set; }
 
         private void OnListViewItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
@@ -49,44 +40,55 @@ namespace sc
             foreach (SteamFriends.FriendMsgHistoryCallback.FriendMessage message in sc.MsgHistory.Messages)
                 sc.Logger.LogChatMessage(false, message.Message, steamID: message.SteamID);
         }
-
-
-        public static string ByteArrayToHexString(byte[] Bytes)
-        {
-            var Result = new StringBuilder(Bytes.Length * 2);
-            var HexAlphabet = "0123456789ABCDEF";
-
-            foreach (var B in Bytes)
-            {
-                Result.Append(HexAlphabet[B >> 4]);
-                Result.Append(HexAlphabet[B & 0xF]);
-            }
-
-            return Result.ToString();
-        }
     }
 
-    public class Friend
+    public class Friend : INotifyPropertyChanged
     {
-        public byte[] avatarHash;
+        public byte[] AvatarHash { get; set; }
 
         public EFriendRelationship Relationship;
         public SteamID steamID;
+        public string Nickname { get; set; }
+        public EPersonaState OnlineStatus { get; set; }
 
+        public string avatarUrl { get; set; }
+        
         public Friend(SteamID steamID)
         {
             this.steamID = steamID;
             Nickname = sc.bot.SteamFriends.GetFriendPersonaName(steamID);
             OnlineStatus = sc.bot.SteamFriends.GetPersonaState();
-            avatarHash = sc.bot.SteamFriends.GetFriendAvatar(steamID);
-            avatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
-                        Friends.ByteArrayToHexString(avatarHash).Substring(0, 2).ToLower() + "/" +
-                        Friends.ByteArrayToHexString(avatarHash).ToLower() + "_full.jpg";
-            Relationship = sc.bot.SteamFriends.GetFriendRelationship(steamID);
+            AvatarHash = sc.bot.SteamFriends.GetFriendAvatar(steamID);
+            if (AvatarHash!=null)
+            {
+                avatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
+                            Utilities.ByteArrayToHexString(AvatarHash).Substring(0, 2).ToLower() + "/" +
+                            Utilities.ByteArrayToHexString(AvatarHash).ToLower() + "_full.jpg";  
+            }
+           
+            
+            
+        }
+        public Friend(SteamID steamID,byte[] avatarHash, string nickname,EPersonaState state)
+        {
+            this.steamID = steamID;
+            Nickname = nickname;
+            OnlineStatus = state;
+            AvatarHash = avatarHash;
+            if (avatarHash!=null)
+            {
+                avatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
+                            Utilities.ByteArrayToHexString(avatarHash).Substring(0, 2).ToLower() + "/" +
+                            Utilities.ByteArrayToHexString(avatarHash).ToLower() + "_full.jpg";  
+            }
+            
+            
         }
 
-        public string Nickname { get; }
-        public EPersonaState OnlineStatus { get; }
-        public string avatarUrl { get; }
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void OnPropertyChanged([CallerMemberName]string prop = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+        } 
     }
 }
