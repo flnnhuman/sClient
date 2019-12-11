@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
 using JetBrains.Annotations;
+using Newtonsoft.Json;
 
 namespace sc
 {
@@ -174,8 +174,211 @@ namespace sc
 
             return await InternalRequest(new Uri(request), HttpMethod.Post, data, referer).ConfigureAwait(false);
         }
+        private async Task<HttpResponseMessage> InternalRequest(Uri requestUri, HttpMethod httpMethod, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null, HttpCompletionOption httpCompletionOption = HttpCompletionOption.ResponseContentRead, byte maxRedirections = MaxTries) {
+			if ((requestUri == null) || (httpMethod == null)) {
+				Logger.LogNullError(nameof(requestUri) + " || " + nameof(httpMethod));
 
-        private async Task<HttpResponseMessage> InternalRequest(Uri requestUri, HttpMethod httpMethod,
+				return null;
+			}
+
+			HttpResponseMessage response;
+
+			using (HttpRequestMessage request = new HttpRequestMessage(httpMethod, requestUri)) {
+				if (data != null) {
+					try {
+						request.Content = new FormUrlEncodedContent(data);
+					} catch (UriFormatException e) {
+						Logger.LogGenericException(e);
+
+						return null;
+					}
+				}
+
+				if (!string.IsNullOrEmpty(referer)) {
+					request.Headers.Referrer = new Uri(referer);
+				}
+
+				if (Debugging.IsUserDebugging) {
+					Logger.LogGenericDebug(httpMethod + " " + requestUri);
+				}
+
+				try {
+					response = await HttpClient.SendAsync(request, httpCompletionOption).ConfigureAwait(false);
+				} catch (Exception e) {
+					Logger.LogGenericDebuggingException(e);
+
+					return null;
+				}
+			}
+
+			if (response == null) {
+				if (Debugging.IsUserDebugging) {
+					Logger.LogGenericDebug("null <- " + httpMethod + " " + requestUri);
+				}
+
+				return null;
+			}
+
+			if (Debugging.IsUserDebugging) {
+				Logger.LogGenericDebug(response.StatusCode + " <- " + httpMethod + " " + requestUri);
+			}
+
+			if (response.IsSuccessStatusCode) {
+				return response;
+			}
+
+			// WARNING: We still have not disposed response by now, make sure to dispose it ASAP if we're not returning it!
+			if ((response.StatusCode >= HttpStatusCode.Ambiguous) && (response.StatusCode < HttpStatusCode.BadRequest) && (maxRedirections > 0)) {
+				Uri redirectUri = response.Headers.Location;
+
+				if (redirectUri.IsAbsoluteUri) {
+					switch (redirectUri.Scheme) {
+						case "http":
+						case "https":
+							break;
+						case "steammobile":
+							// Those redirections are invalid, but we're aware of that and we have extra logic for them
+							return response;
+						default:
+							// We have no clue about those, but maybe HttpClient can handle them for us
+							sc.Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(redirectUri.Scheme), redirectUri.Scheme));
+
+							break;
+					}
+				} else {
+					redirectUri = new Uri(requestUri, redirectUri);
+				}
+
+				response.Dispose();
+
+				// Per https://tools.ietf.org/html/rfc7231#section-7.1.2, a redirect location without a fragment should inherit the fragment from the original URI
+				if (!string.IsNullOrEmpty(requestUri.Fragment) && string.IsNullOrEmpty(redirectUri.Fragment)) {
+					redirectUri = new UriBuilder(redirectUri) { Fragment = requestUri.Fragment }.Uri;
+				}
+
+				return await InternalRequest(redirectUri, httpMethod, data, referer, httpCompletionOption, --maxRedirections).ConfigureAwait(false);
+			}
+
+			if (response.StatusCode.IsClientErrorCode()) {
+				if (Debugging.IsUserDebugging) {
+					Logger.LogGenericDebug(string.Format(Strings.Content, await response.Content.ReadAsStringAsync().ConfigureAwait(false)));
+				}
+
+				// Do not retry on client errors
+				return response;
+			}
+
+			using (response) {
+				if (Debugging.IsUserDebugging) {
+					Logger.LogGenericDebug(string.Format(Strings.Content, await response.Content.ReadAsStringAsync().ConfigureAwait(false)));
+				}
+
+				return null;
+			}
+		}
+
+        private async Task<HttpResponseMessage> InternalMultipartFormPost(string request,[CanBeNull] IReadOnlyDictionary<(string Name, string FileName), byte[]> multipartFormData, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null) {
+            if (string.IsNullOrEmpty(request)) {
+                Logger.LogNullError(nameof(request));
+
+                return null;
+            }
+
+            return await InternalMultipartFormRequest(new Uri(request), HttpMethod.Post,multipartFormData, data, referer).ConfigureAwait(false);
+        }
+        
+        private async Task<StringResponse> UrlPostMultipartFormToString(string request,[CanBeNull] IReadOnlyDictionary<(string Name, string FileName), byte[]> multipartFormData, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null, ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries) {
+            if (string.IsNullOrEmpty(request) || (maxTries == 0)) {
+                Logger.LogNullError(nameof(request) + " || " + nameof(maxTries));
+
+                return null;
+            }
+
+            StringResponse result = null;
+
+            for (byte i = 0; i < maxTries; i++) {
+                using HttpResponseMessage response = await InternalMultipartFormPost(request,multipartFormData, data, referer).ConfigureAwait(false);
+
+                if (response == null) {
+                    continue;
+                }
+
+                if (response.StatusCode.IsClientErrorCode()) {
+                    if (requestOptions.HasFlag(ERequestOptions.ReturnClientErrors)) {
+                        result = new StringResponse(response);
+                    }
+
+                    break;
+                }
+
+                return new StringResponse(response, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+            }
+
+            if (maxTries > 1) {
+                Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, maxTries));
+                Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, request));
+            }
+
+            return result;
+        }
+
+        
+        public async Task<ObjectResponse<T>> UrlPostToMultipartFormJsonObject<T>(string request,[CanBeNull] IReadOnlyDictionary<(string Name, string FileName), byte[]> multipartFormData, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null, ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries) where T : class {
+            if (string.IsNullOrEmpty(request) || (maxTries == 0)) {
+                Logger.LogNullError(nameof(request) + " || " + nameof(maxTries));
+
+                return null;
+            }
+
+            ObjectResponse<T> result = null;
+
+            for (byte i = 0; i < maxTries; i++) {
+                StringResponse response = await UrlPostMultipartFormToString(request,multipartFormData, data, referer, requestOptions | ERequestOptions.ReturnClientErrors, 1).ConfigureAwait(false);
+
+                if (response == null) {
+                    return null;
+                }
+
+                if (response.StatusCode.IsClientErrorCode()) {
+                    if (requestOptions.HasFlag(ERequestOptions.ReturnClientErrors)) {
+                        result = new ObjectResponse<T>(response);
+                    }
+
+                    break;
+                }
+
+                if (string.IsNullOrEmpty(response.Content)) {
+                    continue;
+                }
+
+                T obj;
+
+                try {
+                    obj = JsonConvert.DeserializeObject<T>(response.Content);
+                } catch (JsonException e) {
+                    Logger.LogGenericWarningException(e);
+
+                    if (Debugging.IsUserDebugging) {
+                        Logger.LogGenericDebug(string.Format(Strings.Content, response.Content));
+                    }
+
+                    continue;
+                }
+
+                return new ObjectResponse<T>(response, obj);
+            }
+
+            if (maxTries > 1) {
+                Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, maxTries));
+                Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, request));
+            }
+
+            return result;
+        }
+
+        
+        private async Task<HttpResponseMessage> InternalMultipartFormRequest(Uri requestUri, HttpMethod httpMethod,
+            [CanBeNull] IReadOnlyDictionary<(string Name, string FileName), byte[]> multipartFormData,
             IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null,
             HttpCompletionOption httpCompletionOption = HttpCompletionOption.ResponseContentRead,
             byte maxRedirections = MaxTries)
@@ -194,7 +397,18 @@ namespace sc
                 if (data != null)
                     try
                     {
-                        request.Content = new FormUrlEncodedContent(data);
+                        MultipartFormDataContent content = new MultipartFormDataContent();
+                        foreach ((string name,string textValue) in data)
+                        {
+                            content.Add(new StringContent(textValue),name);
+                        }
+
+                        foreach (((string name,string fileName),byte[] binartyValue) in multipartFormData)
+                        {
+                            content.Add(new ByteArrayContent(binartyValue),name,fileName);
+                        }
+                        request.Content = content;
+                        
                     }
                     catch (UriFormatException e)
                     {
@@ -328,21 +542,6 @@ namespace sc
             return result;
         }
 
-        internal static HtmlDocument StringToHtmlDocument(string html)
-        {
-            if (html == null)
-            {
-                sc.Logger.LogNullError(nameof(html));
-
-                return null;
-            }
-
-            var htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(html);
-
-            return htmlDocument;
-        }
-
         public async Task<BasicResponse> UrlHead(string request, string referer = null,
             ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries)
         {
@@ -390,62 +589,9 @@ namespace sc
                 return null;
             }
 
-            return await InternalRequest(new Uri(request), HttpMethod.Head, null, referer).ConfigureAwait(false);
+            return await InternalRequest(new Uri(request), HttpMethod.Head, null as IReadOnlyCollection<KeyValuePair<string, string>>, referer).ConfigureAwait(false);
         }
 
-        public class BasicResponse
-        {
-            internal readonly Uri FinalUri;
-
-            [PublicAPI] public readonly HttpStatusCode StatusCode;
-
-            internal BasicResponse([NotNull] HttpResponseMessage httpResponseMessage)
-            {
-                if (httpResponseMessage == null) throw new ArgumentNullException(nameof(httpResponseMessage));
-
-                FinalUri = httpResponseMessage.Headers.Location ?? httpResponseMessage.RequestMessage.RequestUri;
-                StatusCode = httpResponseMessage.StatusCode;
-            }
-
-            internal BasicResponse([NotNull] BasicResponse basicResponse)
-            {
-                if (basicResponse == null) throw new ArgumentNullException(nameof(basicResponse));
-
-                FinalUri = basicResponse.FinalUri;
-                StatusCode = basicResponse.StatusCode;
-            }
-        }
-
-        public sealed class HtmlDocumentResponse : BasicResponse
-        {
-            [PublicAPI] public readonly HtmlDocument Content;
-
-            internal HtmlDocumentResponse([NotNull] StringResponse stringResponse) : base(stringResponse)
-            {
-                if (stringResponse == null) throw new ArgumentNullException(nameof(stringResponse));
-
-                if (!string.IsNullOrEmpty(stringResponse.Content))
-                    Content = StringToHtmlDocument(stringResponse.Content);
-            }
-        }
-
-        internal sealed class StringResponse : BasicResponse
-        {
-            internal readonly string Content;
-
-            internal StringResponse([NotNull] HttpResponseMessage httpResponseMessage, [NotNull] string content) : base(
-                httpResponseMessage)
-            {
-                if (httpResponseMessage == null || content == null)
-                    throw new ArgumentNullException(nameof(httpResponseMessage) + " || " + nameof(content));
-
-                Content = content;
-            }
-
-            internal StringResponse([NotNull] HttpResponseMessage httpResponseMessage) : base(httpResponseMessage)
-            {
-            }
-        }
     }
 
     public class MyCookie
@@ -460,26 +606,4 @@ namespace sc
         }
     }
 
-    public class BasicResponse
-    {
-        internal readonly Uri FinalUri;
-
-        [PublicAPI] public readonly HttpStatusCode StatusCode;
-
-        internal BasicResponse([NotNull] HttpResponseMessage httpResponseMessage)
-        {
-            if (httpResponseMessage == null) throw new ArgumentNullException(nameof(httpResponseMessage));
-
-            FinalUri = httpResponseMessage.Headers.Location ?? httpResponseMessage.RequestMessage.RequestUri;
-            StatusCode = httpResponseMessage.StatusCode;
-        }
-
-        internal BasicResponse([NotNull] BasicResponse basicResponse)
-        {
-            if (basicResponse == null) throw new ArgumentNullException(nameof(basicResponse));
-
-            FinalUri = basicResponse.FinalUri;
-            StatusCode = basicResponse.StatusCode;
-        }
-    }
 }

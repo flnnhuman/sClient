@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
+using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -351,7 +353,7 @@ namespace sc
             };
 
             // This request doesn't go through UrlPostRetryWithSession as we have no access to session refresh capability (this is in fact session initialization)
-            WebBrowser.BasicResponse response = await WebLimitRequest(serviceURL,
+            BasicResponse response = await WebLimitRequest(serviceURL,
                     async () => await WebBrowser.UrlPost(serviceURL + request, data, serviceURL).ConfigureAwait(false))
                 .ConfigureAwait(false);
 
@@ -537,7 +539,7 @@ namespace sc
                     data = new Dictionary<string, string>(1, StringComparer.Ordinal) {{sessionName, sessionID}};
             }
 
-            WebBrowser.BasicResponse response = await WebLimitRequest(host,
+            BasicResponse response = await WebLimitRequest(host,
                     async () => await WebBrowser.UrlPost(host + request, data, referer).ConfigureAwait(false))
                 .ConfigureAwait(false);
 
@@ -667,7 +669,7 @@ namespace sc
                 }
             }
 
-            WebBrowser.HtmlDocumentResponse response = await WebLimitRequest(host,
+            HtmlDocumentResponse response = await WebLimitRequest(host,
                     async () => await WebBrowser.UrlGetToHtmlDocument(host + request).ConfigureAwait(false))
                 .ConfigureAwait(false);
 
@@ -744,7 +746,7 @@ namespace sc
                 const string host = SteamStoreURL;
                 const string request = "/account";
 
-                WebBrowser.BasicResponse response =
+               BasicResponse response =
                     await WebLimitRequest(host,
                             async () => await WebBrowser.UrlHead(host + request).ConfigureAwait(false))
                         .ConfigureAwait(false);
@@ -845,5 +847,237 @@ namespace sc
             NotRegisteredYet,
             AccessDenied
         }
+        internal async Task<string?> UploadAvatar(string imagePath, SteamID steamID) {
+            if (!File.Exists(imagePath)) {
+                Bot.Logger.LogNullError(nameof(imagePath));
+                return null;
+            }
+            
+            const string setAvatarRequest = "/actions/FileUploader";
+
+            // Extra entry for sessionID
+            Dictionary<string, string> data = new Dictionary<string, string>(6,StringComparer.Ordinal) {
+                {"MAX_FILE_SIZE", "1048576"},
+                {"type", "player_avatar_image"},
+                {"sId", steamID.ConvertToUInt64().ToString()},
+                {"doSub", "1"},
+                {"json","1"},
+                
+            };
+            
+            var httpClient = new HttpClient();
+            var content = new MultipartFormDataContent();
+            var setAvatarResponse = await UrlPostToMultipartFormJsonObjectWithSession<BooleanResponse>(
+                SteamCommunityURL , setAvatarRequest, new Dictionary<(string Name, string FileName), byte[]>(1)
+                {
+                    {("avatar","file.jpg"),File.ReadAllBytes(imagePath)}
+                },data
+            );
+            
+            return null;
+        }
+        	public async Task<T> UrlPostToMultipartFormJsonObjectWithSession<T>(string host, string request,[CanBeNull] IReadOnlyDictionary<(string Name, string FileName), byte[]> multipartFormData, Dictionary<string, string> data = null, string referer = null, ESession session = ESession.Lowercase, bool checkSessionPreemptively = true, byte maxTries = WebBrowser.MaxTries) where T : class {
+			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(request) || !Enum.IsDefined(typeof(ESession), session)) {
+				Bot.Logger.LogNullError(nameof(host) + " || " + nameof(request) + " || " + nameof(session));
+
+				return null;
+			}
+
+			if (maxTries == 0) {
+				Bot.Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, WebBrowser.MaxTries));
+				Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+				return null;
+			}
+
+			if (checkSessionPreemptively) {
+				// Check session preemptively as this request might not get redirected to expiration
+				bool? sessionExpired = await IsSessionExpired().ConfigureAwait(false);
+
+				if (sessionExpired.GetValueOrDefault(true)) {
+					if (await RefreshSession().ConfigureAwait(false)) {
+						return await UrlPostToMultipartFormJsonObjectWithSession<T>(host, request,multipartFormData, data, referer, session, true, --maxTries).ConfigureAwait(false);
+					}
+
+					Bot.Logger.LogGenericWarning(Strings.WarningFailed);
+					Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+					return null;
+				}
+			} else {
+				// If session refresh is already in progress, just wait for it
+				await SessionSemaphore.WaitAsync().ConfigureAwait(false);
+				SessionSemaphore.Release();
+			}
+
+			if (!Initialized) {
+				for (byte i = 0; (i < sc.GlobalConfig.ConnectionTimeout) && !Initialized && Bot.IsConnectedAndLoggedOn; i++) {
+					await Task.Delay(1000).ConfigureAwait(false);
+				}
+
+				if (!Initialized) {
+					Bot.Logger.LogGenericWarning(Strings.WarningFailed);
+					Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+					return null;
+				}
+			}
+
+			if (session != ESession.None) {
+				string sessionID = WebBrowser.CookieContainer.GetCookieValue(host, "sessionid");
+
+				if (string.IsNullOrEmpty(sessionID)) {
+					Bot.Logger.LogNullError(nameof(sessionID));
+
+					return null;
+				}
+
+				string sessionName;
+
+				switch (session) {
+					case ESession.CamelCase:
+						sessionName = "sessionID";
+
+						break;
+					case ESession.Lowercase:
+						sessionName = "sessionid";
+
+						break;
+					case ESession.PascalCase:
+						sessionName = "SessionID";
+
+						break;
+					default:
+						Bot.Logger.LogGenericError(string.Format(Strings.WarningUnknownValuePleaseReport, nameof(session), session));
+
+						return null;
+				}
+
+				if (data != null) {
+					data[sessionName] = sessionID;
+				} else {
+					data = new Dictionary<string, string>(1, StringComparer.Ordinal) { { sessionName, sessionID } };
+				}
+			}
+
+			ObjectResponse<T> response = await WebLimitRequest(host, async () => await WebBrowser.UrlPostToMultipartFormJsonObject<T>(host + request,multipartFormData, data, referer).ConfigureAwait(false)).ConfigureAwait(false);
+
+			if (response == null) {
+				return null;
+			}
+
+			if (IsSessionExpiredUri(response.FinalUri)) {
+				if (await RefreshSession().ConfigureAwait(false)) {
+					return await UrlPostToMultipartFormJsonObjectWithSession<T>(host, request,multipartFormData ,data, referer, session, checkSessionPreemptively, --maxTries).ConfigureAwait(false);
+				}
+
+				Bot.Logger.LogGenericWarning(Strings.WarningFailed);
+				Bot.Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, host + request));
+
+				return null;
+			}
+
+			// Under special brain-damaged circumstances, Steam might just return our own profile as a response to the request, for absolutely no reason whatsoever - just try again in this case
+			if (await IsProfileUri(response.FinalUri).ConfigureAwait(false)) {
+				Bot.Logger.LogGenericDebug(string.Format(Strings.WarningWorkaroundTriggered, nameof(IsProfileUri)));
+
+				return await UrlPostToMultipartFormJsonObjectWithSession<T>(host, request,multipartFormData, data, referer, session, checkSessionPreemptively, --maxTries).ConfigureAwait(false);
+			}
+
+			return response.Content;
+		}
+
+    }
+    public class BooleanResponse {
+        [JsonProperty(PropertyName = "success", Required = Required.Always)]
+        public readonly bool Success;
+
+        [JsonConstructor]
+        protected BooleanResponse() { }
+    }   
+    public class BasicResponse
+    {
+        internal readonly Uri FinalUri;
+
+        [PublicAPI] public readonly HttpStatusCode StatusCode;
+
+        internal BasicResponse([NotNull] HttpResponseMessage httpResponseMessage)
+        {
+            if (httpResponseMessage == null) throw new ArgumentNullException(nameof(httpResponseMessage));
+
+            FinalUri = httpResponseMessage.Headers.Location ?? httpResponseMessage.RequestMessage.RequestUri;
+            StatusCode = httpResponseMessage.StatusCode;
+        }
+
+        internal BasicResponse([NotNull] BasicResponse basicResponse)
+        {
+            if (basicResponse == null) throw new ArgumentNullException(nameof(basicResponse));
+
+            FinalUri = basicResponse.FinalUri;
+            StatusCode = basicResponse.StatusCode;
+        }
+    }
+
+    public sealed class ObjectResponse<T> : BasicResponse {
+        [PublicAPI]
+        public readonly T Content;
+
+        internal ObjectResponse([NotNull] StringResponse stringResponse, T content) : base(stringResponse) {
+            if (stringResponse == null) {
+                throw new ArgumentNullException(nameof(stringResponse));
+            }
+
+            Content = content;
+        }
+
+        internal ObjectResponse([NotNull] BasicResponse basicResponse) : base(basicResponse) { }
+    }
+
+    internal sealed class StringResponse : BasicResponse {
+        internal readonly string Content;
+
+        internal StringResponse([NotNull] HttpResponseMessage httpResponseMessage, [NotNull] string content) : base(httpResponseMessage) {
+            if ((httpResponseMessage == null) || (content == null)) {
+                throw new ArgumentNullException(nameof(httpResponseMessage) + " || " + nameof(content));
+            }
+
+            Content = content;
+        }
+
+        internal StringResponse([NotNull] HttpResponseMessage httpResponseMessage) : base(httpResponseMessage) { }
+    }
+
+    public sealed class HtmlDocumentResponse : BasicResponse
+    {
+        internal static HtmlDocument StringToHtmlDocument(string html)
+        {
+            if (html == null)
+            {
+                sc.Logger.LogNullError(nameof(html));
+
+                return null;
+            }
+
+            var htmlDocument = new HtmlDocument();
+            htmlDocument.LoadHtml(html);
+
+            return htmlDocument;
+        }
+
+        [PublicAPI] public readonly HtmlDocument Content;
+
+        internal HtmlDocumentResponse([NotNull] StringResponse stringResponse) : base(stringResponse)
+        {
+            if (stringResponse == null) throw new ArgumentNullException(nameof(stringResponse));
+
+            if (!string.IsNullOrEmpty(stringResponse.Content))
+                Content = StringToHtmlDocument(stringResponse.Content);
+        }
+    }
+    
+    public enum ERequestOptions : byte
+    {
+        None = 0,
+        ReturnClientErrors = 1
     }
 }
