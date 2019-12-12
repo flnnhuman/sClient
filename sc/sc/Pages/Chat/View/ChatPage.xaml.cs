@@ -2,6 +2,8 @@
 using sc.Chat.ViewModel;
 using SteamKit2;
 using Xamarin.Forms;
+using SQLite;
+
 
 namespace sc.Chat.View
 {
@@ -15,11 +17,11 @@ namespace sc.Chat.View
             BindingContext = vm = new ChatPageViewModel(friendSteamID);
             
 
-            // vm.ListMessages.CollectionChanged += (sender, e) =>
-            // {
-            //     var target = vm.ListMessages[vm.ListMessages.Count - 1];
-            //     MessagesListView.ScrollTo(target, ScrollToPosition.End, true);
-            // };
+            vm.ListMessages.Value.CollectionChanged += (sender, e) =>
+            {
+                var target = vm.ListMessages.Value[vm.ListMessages.Value.Count - 1];
+                MessagesListView.ScrollTo(target, ScrollToPosition.End, true);
+            };
         }
         
     }

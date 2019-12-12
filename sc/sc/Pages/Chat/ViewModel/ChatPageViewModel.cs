@@ -5,12 +5,13 @@ using MvvmHelpers;
 using sc.Chat.Model;
 using SteamKit2;
 using Xamarin.Forms;
+using SQLite;
 
 namespace sc.Chat.ViewModel
 {
     public class ChatPageViewModel : BaseViewModel
     {
-        public List<Message> ListMessages { get; }
+        public KeyValuePair<SteamID,ObservableRangeCollection<Message>>  ListMessages { get; }
         public ICommand SendCommand { get; set; }
 
         private SteamID FriendSteamID;
@@ -18,12 +19,12 @@ namespace sc.Chat.ViewModel
         public ChatPageViewModel(SteamID friendSteamID)
         {
             FriendSteamID = friendSteamID;
-            ListMessages = new List<Message>();
+            ListMessages = new KeyValuePair<SteamID,ObservableRangeCollection<Message>> ();
             
             
             foreach (var message in sc.MsgHistory.Messages)
             {
-                ListMessages.Add(new Message(message));
+                ListMessages.Value.Add(new Message(message));
             }
             
             SendCommand = new Command(() =>
@@ -33,7 +34,7 @@ namespace sc.Chat.ViewModel
                     sc.bot.SteamFriends.SendChatMessage(friendSteamID,EChatEntryType.ChatMsg,OutText);
                     var message = new Message(OutText,DateTime.Now,false);
                     
-                    ListMessages.Add(message);
+                    ListMessages.Value.Add(message);
                     OutText = "";
                 }
 

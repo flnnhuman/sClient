@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -12,7 +13,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Acr.UserDialogs;
 using JetBrains.Annotations;
+using MvvmHelpers;
 using Newtonsoft.Json;
+using sc.Chat.Model;
 using SteamKit2;
 using SteamKit2.Unified.Internal;
 using Xamarin.Essentials;
@@ -961,8 +964,17 @@ namespace sc
             if (callback.Result != EResult.OK)
                 Logger.LogGenericError(nameof(callback) + " || " + nameof(callback.Result));
 
+            if (callback.SteamID==null){return;}
+            var Collection = new ObservableRangeCollection<Message>();
+            foreach (var message in callback.Messages)
+            {
+                Collection.Add(new Message(message));
+            }
 
-            sc.MsgHistory = callback;
+            Device.BeginInvokeOnMainThread(()=>{sc.ChatTable.Append(
+                new KeyValuePair<SteamID, ObservableRangeCollection<Message>>(callback.SteamID, Collection));});
+            
+         
         }
 
         private static void OnFriendAdded(SteamFriends.FriendAddedCallback callback)
