@@ -56,8 +56,25 @@
           <e p="App.xaml.cs" t="Include" />
           <e p="CameraPAge.xaml" t="Include" />
           <e p="CameraPAge.xaml.cs" t="Include" />
-          <e p="ChatPage.xaml" t="Include" />
-          <e p="ChatPage.xaml.cs" t="Include" />
+          <e p="Chat" t="Include">
+            <e p="CustomCells" t="Include">
+              <e p="SelectorDataTemplate.cs" t="Include" />
+              <e p="TextInViewCell.xaml" t="Include" />
+              <e p="TextInViewCell.xaml.cs" t="Include" />
+              <e p="TextOutViewCell.xaml" t="Include" />
+              <e p="TextOutViewCell.xaml.cs" t="Include" />
+            </e>
+            <e p="Model" t="Include">
+              <e p="Message.cs" t="Include" />
+            </e>
+            <e p="View" t="Include">
+              <e p="ChatPage.xaml" t="Include" />
+              <e p="ChatPage.xaml.cs" t="Include" />
+            </e>
+            <e p="ViewModel" t="Include">
+              <e p="ChatPageViewModel.cs" t="Include" />
+            </e>
+          </e>
           <e p="Friends.xaml" t="Include" />
           <e p="Friends.xaml.cs" t="Include" />
           <e p="MainPage.xaml" t="Include" />

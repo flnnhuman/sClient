@@ -7,6 +7,7 @@ using SteamKit2;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using System.Runtime.CompilerServices;
+using sc.Chat.View;
 
 namespace sc
 {
@@ -39,6 +40,8 @@ namespace sc
 
             foreach (SteamFriends.FriendMsgHistoryCallback.FriendMessage message in sc.MsgHistory.Messages)
                 sc.Logger.LogChatMessage(false, message.Message, steamID: message.SteamID);
+            
+            await sc.Mainpage1.Detail.Navigation.PushAsync(new ChatPage(tappedItem.steamID));
         }
     }
 
