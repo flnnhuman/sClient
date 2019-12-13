@@ -31,12 +31,7 @@ namespace sc
         private async void OnListViewItemTapped(object sender, ItemTappedEventArgs e)
         {
             var tappedItem = e.Item as Friend;
-            if (sc.ChatTable.Count(pair => pair.Key == tappedItem.steamID) == 0)
-            {
-                sc.bot.SteamFriends.RequestMessageHistory(tappedItem.steamID); 
-            }
-           
-            
+            sc.bot.SteamFriends.RequestMessageHistory(tappedItem.steamID);
             for (var i = 0; i < 10; i++)
             {
                 if (sc.MsgHistory?.SteamID == tappedItem.steamID) break;

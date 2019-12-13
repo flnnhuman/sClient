@@ -1,24 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using MvvmHelpers;
 using Newtonsoft.Json;
-using sc.Chat.Model;
-using SQLite;
 using SteamKit2;
-using Xamarin.Essentials;
 
 namespace sc
 {
     public static class sc
     {
-        public static readonly string CacheDir = FileSystem.CacheDirectory;
-        public static readonly string MainDir = FileSystem.AppDataDirectory;
         public static Bot bot;
 
-        public static SQLiteConnection db = new SQLiteConnection (Path.Combine(MainDir,"ChatDB.db3"));
-        public static TableQuery<KeyValuePair<SteamID,ObservableRangeCollection<Message>>> ChatTable;
+
         public static mainpage1 Mainpage1 = new mainpage1();
 
         public static readonly Logger Logger = new Logger(nameof(sc));
@@ -56,13 +48,6 @@ namespace sc
             WebBrowser = new WebBrowser(Logger, true);
             //await RegisterBots().ConfigureAwait(false);
 
-            db.CreateTable<KeyValuePair<SteamID,ObservableRangeCollection<Message>>> ();
-            Logger.LogGenericInfo("Reading data");
-            ChatTable = db.Table<KeyValuePair<SteamID,ObservableRangeCollection<Message>>> ();
-            foreach (var chat in ChatTable){
-                Logger.LogGenericInfo(chat.Key.Render());
-            }
-            
             var globalDatabaseFile = Path.Combine(MainPage.MainDir, GetFilePath(Bot.EFileType.Database));
 
             if (string.IsNullOrEmpty(globalDatabaseFile))
