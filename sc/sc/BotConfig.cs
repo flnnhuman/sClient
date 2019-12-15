@@ -40,7 +40,7 @@ namespace sc
         public readonly bool Enabled = DefaultEnabled;
 
         [JsonProperty(Required = Required.DisallowNull)]
-        public readonly EPersonaState OnlineStatus = DefaultOnlineStatus;
+        public EPersonaState OnlineStatus { get; set; } = DefaultOnlineStatus;
 
         public readonly bool UseLoginKeys = DefaultUseLoginKeys;
         private string BackingSteamParentalCode = DefaultSteamParentalCode;

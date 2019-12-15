@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="sc.SettingsPage">
+    <ContentPage.Content>
+        <StackLayout>
+          
+            <StackLayout x:Name="GlobalSettings" >
+             
+                <TableView Intent="Settings">
+                    <TableRoot>
+                        <TableSection Title="Global Settings">
+                            <SwitchCell x:Name="Debug"
+                                        Text="Is Debug Enabled"
+                                        On="{Binding Debug}"
+                                        OnChanged="IsDebug"/>
+                            
+                            <EntryCell x:Name="ConnectionTimeout" Label="ConnectionTimeout" 
+                                       Placeholder="{Binding ConnectionTimeout}" 
+                                       Keyboard="Numeric" 
+                                       Completed="ConnectionTimeoutCompleted"/>
+                            
+                            <EntryCell x:Name="LoginLimiterDelay" Label="LoginLimiterDelay" 
+                                       Placeholder="{Binding LoginLimiterDelay}" 
+                                       Keyboard="Numeric" 
+                                       Completed="LoginLimiterDelayCompleted"/>
+                           
+                            <EntryCell x:Name="WebLimiterDelay" Label="WebLimiterDelay" 
+                                       Placeholder="{Binding WebLimiterDelay}" 
+                                       Keyboard="Numeric" 
+                                       Completed="WebLimiterDelayCompleted"/>
+
+                            <EntryCell x:Name="SteamProtocols" Label="SteamProtocols" 
+                                       Placeholder="{Binding SteamProtocols}" 
+                                       Keyboard="Numeric" 
+                                       Completed="SteamProtocolsCompleted"/>
+                            
+                            
+                        </TableSection>
+                    </TableRoot>
+                </TableView>   
+                
+            </StackLayout>
+            
+            
+            <StackLayout x:Name="AccountSettings" >
+                <TableView Intent="Settings">
+                    <TableRoot>
+                        <TableSection Title="Global Settings">
+                            <SwitchCell x:Name="OnlineStatus"
+                                        Text="OnlineStatus"
+                                        On="{Binding OnlineStatus}"
+                                        OnChanged="OnlineStatusCompleted"/>
+                            
+                           
+                            
+                            
+                        </TableSection>
+                    </TableRoot>
+                </TableView>  
+            </StackLayout>
+            
+            <!--
+ 
+  "UseLoginKeys": true -->
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

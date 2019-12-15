@@ -95,6 +95,10 @@ namespace sc
         private void LogOut(object sender, EventArgs e)
         {
             sc.bot.Stop();
+        } private void Settings(object sender, EventArgs e)
+        {
+            Detail = new NavigationPage(new SettingsPage());
+            IsPresented = false;
         }
     }
 }

@@ -18,15 +18,15 @@ namespace sc
         private const ProtocolTypes DefaultSteamProtocols = ProtocolTypes.WebSocket;
 
         [JsonProperty(Required = Required.DisallowNull)]
-        public readonly byte ConnectionTimeout = DefaultConnectionTimeout;
+        public byte ConnectionTimeout { get; set; } = DefaultConnectionTimeout;
 
-        public readonly bool Debug = DefaultDebug;
+        public bool Debug { get; set; } = DefaultDebug;
 
         [JsonProperty(Required = Required.DisallowNull)]
-        public readonly byte LoginLimiterDelay = DefaultLoginLimiterDelay;
+        public byte LoginLimiterDelay { get; set; } = DefaultLoginLimiterDelay;
 
-        public readonly ushort WebLimiterDelay = DefaultWebLimiterDelay;
-        public ProtocolTypes SteamProtocols { get; } = DefaultSteamProtocols;
+        public ushort WebLimiterDelay { get; set; } = DefaultWebLimiterDelay;
+        public ProtocolTypes SteamProtocols { get; set; } = DefaultSteamProtocols;
 
         internal static GlobalConfig CreateOrLoad(string filePath)
         {

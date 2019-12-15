@@ -107,6 +107,8 @@
           <e p="mainpage1.xaml.cs" t="Include" />
           <e p="second page.xaml" t="Include" />
           <e p="second page.xaml.cs" t="Include" />
+          <e p="SettingsPage.xaml" t="Include" />
+          <e p="SettingsPage.xaml.cs" t="Include" />
         </e>
         <e p="RuntimeCompability.cs" t="Include" />
         <e p="sc.cs" t="Include" />

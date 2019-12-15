@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <MasterDetailPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -46,6 +46,9 @@
                     
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
                         <Button Text="LogOut" Clicked="LogOut" BackgroundColor="Transparent" BorderColor="Transparent" />
+                    </StackLayout>
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                        <Button Text="Settings" Clicked="Settings" BackgroundColor="Transparent" BorderColor="Transparent" />
                     </StackLayout>
                 </StackLayout>   
                 </StackLayout>
