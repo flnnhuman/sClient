@@ -10,7 +10,7 @@ namespace sc.Chat.ViewModel
 {
     public class ChatPageViewModel : BaseViewModel
     {
-        public List<Message> ListMessages { get; }
+        public ObservableRangeCollection<Message> ListMessages { get; }
         public ICommand SendCommand { get; set; }
 
         private SteamID FriendSteamID;
@@ -18,7 +18,7 @@ namespace sc.Chat.ViewModel
         public ChatPageViewModel(SteamID friendSteamID)
         {
             FriendSteamID = friendSteamID;
-            ListMessages = new List<Message>();
+            ListMessages = new ObservableRangeCollection<Message>();
             
             
             foreach (var message in sc.MsgHistory.Messages)

@@ -17,6 +17,7 @@ using SteamKit2;
 using SteamKit2.Unified.Internal;
 using Xamarin.Essentials;
 using Xamarin.Forms;
+using sc.Chat.Model;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -1102,6 +1103,12 @@ namespace sc
             // Handling messages will still work correctly in invisible mode, which is how it should work in the first place
             // This goes in addition to usual logic that ignores irrelevant messages from being parsed further
             if (notification.local_echo || BotConfig.OnlineStatus == EPersonaState.Offline) return;
+
+            if (sc.Mainpage1.Friends.CurrentChatPage!=null)
+            {
+                sc.Mainpage1.Friends.CurrentChatPage.vm.ListMessages.Add(new Message(message,DateTime.Now, true));
+            }
+           
 
             //todo await Commands.HandleMessage(notification.steamid_friend, message).ConfigureAwait(false);
         }

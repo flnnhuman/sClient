@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ContentModelStore">
+    <e p="C:\Program Files (x86)\Android\android-sdk\platforms\android-27\data\res" t="IncludeRecursive" />
     <e p="C:\Program Files (x86)\Android\android-sdk\platforms\android-28\data\res" t="IncludeRecursive" />
     <e p="C:\Users\pesec\.nuget\packages\xamarin.android.arch.lifecycle.runtime\1.1.1.3\proguard\monoandroid90\proguard.txt" t="Include" />
     <e p="C:\Users\pesec\.nuget\packages\xamarin.android.arch.lifecycle.viewmodel\1.1.1.3\proguard\monoandroid90\proguard.txt" t="Include" />
@@ -15,8 +16,11 @@
     <e p="C:\Users\pesec\.nuget\packages\xamarin.android.support.versionedparcelable\28.0.0.3\proguard\monoandroid90" t="Include">
       <e p="proguard.txt" t="Include" />
     </e>
-    <e p="C:\Users\pesec\.Rider2019.2\system\extResources" t="IncludeRecursive" />
-    <e p="C:\Users\pesec\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_sc.-1768076253.00" t="ExcludeRecursive" />
+    <e p="C:\Users\pesec\.nuget\packages\xamarin.forms\4.3.0.991221\build\MonoAndroid10" t="Include">
+      <e p="proguard.cfg" t="Include" />
+    </e>
+    <e p="C:\Users\pesec\.Rider2019.3\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\pesec\.Rider2019.3\system\resharper-host\local\Transient\ReSharperHost\v193\SolutionCaches\_sc.-1768076253.00" t="ExcludeRecursive" />
     <e p="C:\Users\pesec\RiderProjects\sClient" t="IncludeFlat">
       <e p="packages" t="ExcludeRecursive">
         <e p="Xamarin.Android.Arch.Lifecycle.Runtime.1.1.1.3\proguard\monoandroid90" t="Include">
@@ -47,6 +51,24 @@
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
             <e p="netstandard2.0" t="Include">
+              <e p="Pages" t="Include">
+                <e p="App.xaml.g.cs" t="Include" />
+                <e p="CameraPage.xaml.g.cs" t="Include" />
+                <e p="Chat" t="Include">
+                  <e p="CustomCells" t="Include">
+                    <e p="ImageInViewCell.xaml.g.cs" t="Include" />
+                    <e p="TextInViewCell.xaml.g.cs" t="Include" />
+                    <e p="TextOutViewCell.xaml.g.cs" t="Include" />
+                  </e>
+                  <e p="View" t="Include">
+                    <e p="ChatPage.xaml.g.cs" t="Include" />
+                  </e>
+                </e>
+                <e p="Friends.xaml.g.cs" t="Include" />
+                <e p="MainPage.xaml.g.cs" t="Include" />
+                <e p="mainpage1.xaml.g.cs" t="Include" />
+                <e p="second page.xaml.g.cs" t="Include" />
+              </e>
               <e p="sc.AssemblyInfo.cs" t="Include" />
             </e>
           </e>
@@ -58,6 +80,8 @@
           <e p="CameraPAge.xaml.cs" t="Include" />
           <e p="Chat" t="Include">
             <e p="CustomCells" t="Include">
+              <e p="ImageInViewCell.xaml" t="Include" />
+              <e p="ImageInViewCell.xaml.cs" t="Include" />
               <e p="SelectorDataTemplate.cs" t="Include" />
               <e p="TextInViewCell.xaml" t="Include" />
               <e p="TextInViewCell.xaml.cs" t="Include" />
@@ -105,7 +129,15 @@
         <e p="bin" t="ExcludeRecursive" />
         <e p="Environment.cs" t="Include" />
         <e p="MainActivity.cs" t="Include" />
-        <e p="obj" t="ExcludeRecursive" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="90" t="Include">
+              <e p="designtime" t="Include">
+                <e p="Resource.Designer.cs" t="Include" />
+              </e>
+            </e>
+          </e>
+        </e>
         <e p="Properties" t="Include">
           <e p="AndroidManifest.xml" t="Include" />
           <e p="AssemblyInfo.cs" t="Include" />
@@ -125,7 +157,6 @@
             <e p="Tabbar.axml" t="Include" />
             <e p="Toolbar.axml" t="Include" />
           </e>
-          <e p="Resource.Designer.cs" t="Include" />
           <e p="values" t="Include">
             <e p="colors.xml" t="Include" />
             <e p="styles.xml" t="Include" />

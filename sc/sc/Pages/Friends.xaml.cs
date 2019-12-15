@@ -14,6 +14,7 @@ namespace sc
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class Friends : ContentPage
     {
+        public ChatPage CurrentChatPage;
         public Friends()
         {
             InitializeComponent();
@@ -40,8 +41,9 @@ namespace sc
 
             foreach (SteamFriends.FriendMsgHistoryCallback.FriendMessage message in sc.MsgHistory.Messages)
                 sc.Logger.LogChatMessage(false, message.Message, steamID: message.SteamID);
-            
-            await sc.Mainpage1.Detail.Navigation.PushAsync(new ChatPage(tappedItem.steamID));
+
+            CurrentChatPage = new ChatPage(tappedItem.steamID);
+            await sc.Mainpage1.Detail.Navigation.PushAsync(CurrentChatPage);
         }
     }
 
