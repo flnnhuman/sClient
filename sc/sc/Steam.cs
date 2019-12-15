@@ -1011,7 +1011,8 @@ namespace sc
                     CancelText = "Ignore",
                     OkText = "Accept"
                 });
-                if (acceptFriendRequest) sc.Mainpage1.OpenWebPage(WebHandler.SteamCommunityURL + "/my/friends/pending");
+                if (acceptFriendRequest)Device.BeginInvokeOnMainThread(()=>{sc.Mainpage1.OpenWebPage(WebHandler.SteamCommunityURL + "/my/friends/pending");});
+                 
             }
 
 
@@ -1185,7 +1186,11 @@ namespace sc
             Avatar.avatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
                         avatarHash.Substring(0, 2).ToLower() + "/" +
                         avatarHash.ToLower() + "_full.jpg";
-            sc.Mainpage1.BindingContext = this; 
+            Device.BeginInvokeOnMainThread(()=>
+            {
+                sc.Mainpage1.BindingContext = this;
+            } );
+           
         }
 
         private void OnMessageReceived(SteamFriends.FriendMsgCallback callback)
