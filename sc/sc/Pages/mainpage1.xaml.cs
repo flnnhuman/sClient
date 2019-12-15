@@ -57,6 +57,7 @@ namespace sc
 
         private void ProfilePage(object sender, EventArgs e)
         {
+            Detail = new NavigationPage(SecondPage);
             var Source = WebHandler.SteamCommunityURL + "/my";
             if (SecondPage?.Source == Source)
             {
@@ -66,7 +67,6 @@ namespace sc
 
             if (SecondPage == null) SecondPage = new second_page {Source = Source};
             SecondPage.Source = Source;
-            Detail = new NavigationPage(SecondPage);
             IsPresented = false;
         }
 

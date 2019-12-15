@@ -31,7 +31,7 @@ namespace sc
             sc.GlobalConfig.Debug = Debug.On;
             
             sc.GlobalConfig.Write(Path.Combine(Bot.MainDir,"config.json"));
-            Debug.Text = sc.GlobalConfig.Debug.ToString();
+            Debug.On = sc.GlobalConfig.Debug;
         }
         void ConnectionTimeoutCompleted(object sender, EventArgs eventArgs)
         {

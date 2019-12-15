@@ -78,7 +78,7 @@ namespace sc
                 //todo Logging.EnableTraceLogging();
 
                 DebugLog.AddListener(new Debugging.DebugListener());
-                DebugLog.Enabled = true;
+                DebugLog.Enabled = sc.GlobalConfig.Debug;
 
                 if (Directory.Exists(Path.Combine(MainPage.MainDir, SharedInfo.DebugDirectory)))
                     try
