@@ -160,7 +160,93 @@ namespace sc
             return await InternalRequest(new Uri(request), HttpMethod.Get, null, referer, httpCompletionOptions)
                 .ConfigureAwait(false);
         }
+        private async Task<StringResponse> UrlPostToString(string request, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null, ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries) {
+        			if (string.IsNullOrEmpty(request) || (maxTries == 0)) {
+        				Logger.LogNullError(nameof(request) + " || " + nameof(maxTries));
+        
+        				return null;
+        			}
+        
+        			StringResponse result = null;
+        
+        			for (byte i = 0; i < maxTries; i++) {
+        				using HttpResponseMessage response = await InternalPost(request, data, referer).ConfigureAwait(false);
+        
+        				if (response == null) {
+        					continue;
+        				}
+        
+        				if (response.StatusCode.IsClientErrorCode()) {
+        					if (requestOptions.HasFlag(ERequestOptions.ReturnClientErrors)) {
+        						result = new StringResponse(response);
+        					}
+        
+        					break;
+        				}
+        
+        				return new StringResponse(response, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+        			}
+        
+        			if (maxTries > 1) {
+        				Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, maxTries));
+        				Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, request));
+        			}
+        
+        			return result;
+        		}
 
+        public async Task<ObjectResponse<T>> UrlPostToJsonObject<T>(string request, IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null, ERequestOptions requestOptions = ERequestOptions.None, byte maxTries = MaxTries) where T : class {
+            if (string.IsNullOrEmpty(request) || (maxTries == 0)) {
+                Logger.LogNullError(nameof(request) + " || " + nameof(maxTries));
+
+                return null;
+            }
+
+            ObjectResponse<T> result = null;
+
+            for (byte i = 0; i < maxTries; i++) {
+                StringResponse response = await UrlPostToString(request, data, referer, requestOptions | ERequestOptions.ReturnClientErrors, 1).ConfigureAwait(false);
+
+                if (response == null) {
+                    return null;
+                }
+
+                if (response.StatusCode.IsClientErrorCode()) {
+                    if (requestOptions.HasFlag(ERequestOptions.ReturnClientErrors)) {
+                        result = new ObjectResponse<T>(response);
+                    }
+
+                    break;
+                }
+
+                if (string.IsNullOrEmpty(response.Content)) {
+                    continue;
+                }
+
+                T obj;
+
+                try {
+                    obj = JsonConvert.DeserializeObject<T>(response.Content);
+                } catch (JsonException e) {
+                    Logger.LogGenericWarningException(e);
+
+                    if (Debugging.IsUserDebugging) {
+                        Logger.LogGenericDebug(string.Format(Strings.Content, response.Content));
+                    }
+
+                    continue;
+                }
+
+                return new ObjectResponse<T>(response, obj);
+            }
+
+            if (maxTries > 1) {
+                Logger.LogGenericWarning(string.Format(Strings.ErrorRequestFailedTooManyTimes, maxTries));
+                Logger.LogGenericDebug(string.Format(Strings.ErrorFailingRequest, request));
+            }
+
+            return result;
+        }
 
         private async Task<HttpResponseMessage> InternalPost(string request,
             IReadOnlyCollection<KeyValuePair<string, string>> data = null, string referer = null)
