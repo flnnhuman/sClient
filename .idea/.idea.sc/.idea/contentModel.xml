@@ -120,6 +120,8 @@
         <e p="Steam.cs" t="Include" />
         <e p="Strings.Designer.cs" t="Include" />
         <e p="Strings.resx" t="Include" />
+        <e p="Strings.ru-RU.Designer.cs" t="Include" />
+        <e p="Strings.ru-RU.resx" t="Include" />
         <e p="Utilities.cs" t="Include" />
         <e p="WebBrowser.cs" t="Include" />
         <e p="WebHandler.cs" t="Include" />
@@ -149,7 +151,10 @@
           <e p="drawable" t="Include">
             <e p="community.png" t="Include" />
             <e p="edit_button.png" t="Include" />
+            <e p="logout.png" t="Include" />
             <e p="message_icon.png" t="Include" />
+            <e p="photocamera.png" t="Include" />
+            <e p="settings.png" t="Include" />
             <e p="shopping_cart.png" t="Include" />
             <e p="steam_icon.png" t="Include" />
             <e p="unfriend.jpg" t="Include" />

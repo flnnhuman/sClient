@@ -41,15 +41,18 @@
                     </StackLayout>
                     
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-                       <Button Text="Camera" Clicked="CameraPage" BackgroundColor="Transparent" BorderColor="Transparent" />
-                    </StackLayout>
-                    
-                    <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
-                        <Button Text="LogOut" Clicked="LogOut" BackgroundColor="Transparent" BorderColor="Transparent" />
+                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="photocamera.png" />
+                        <Button Text="Camera" Clicked="CameraPage" BackgroundColor="Transparent" BorderColor="Transparent" />
                     </StackLayout>
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="settings.png" />
                         <Button Text="Settings" Clicked="Settings" BackgroundColor="Transparent" BorderColor="Transparent" />
                     </StackLayout>
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand" VerticalOptions="End">
+                        <Image WidthRequest="24" HeightRequest="24" Aspect="AspectFit" Source="logout.png" />
+                        <Button Text="LogOut" Clicked="LogOut" BackgroundColor="Transparent" BorderColor="Transparent" />
+                    </StackLayout> 
+                    
                 </StackLayout>   
                 </StackLayout>
             </ContentPage.Content>

@@ -61,6 +61,15 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Account Settings.
+        /// </summary>
+        public static string Account_Settings {
+            get {
+                return ResourceManager.GetString("Account Settings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to This account is limited, idling process is unavailable until the restriction is removed!.
         /// </summary>
         public static string BotAccountLimited {
@@ -223,6 +232,33 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Camera.
+        /// </summary>
+        public static string CameraLabel {
+            get {
+                return ResourceManager.GetString("CameraLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Community.
+        /// </summary>
+        public static string CommunityLabel {
+            get {
+                return ResourceManager.GetString("CommunityLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ConnectionTimeout.
+        /// </summary>
+        public static string ConnectionTimeout {
+            get {
+                return ResourceManager.GetString("ConnectionTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Content:
         ///{0}.
         /// </summary>
@@ -314,11 +350,92 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Friends.
+        /// </summary>
+        public static string FriendsLabel {
+            get {
+                return ResourceManager.GetString("FriendsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Global Setting.
+        /// </summary>
+        public static string Global_Setting {
+            get {
+                return ResourceManager.GetString("Global Setting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to isDebug .
+        /// </summary>
+        public static string isDebugLabel {
+            get {
+                return ResourceManager.GetString("isDebugLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Logging in to {0}....
         /// </summary>
         public static string LoggingIn {
             get {
                 return ResourceManager.GetString("LoggingIn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LoginLimitDelay.
+        /// </summary>
+        public static string LoginLimitDelay {
+            get {
+                return ResourceManager.GetString("LoginLimitDelay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LogOut.
+        /// </summary>
+        public static string LogOutLabel {
+            get {
+                return ResourceManager.GetString("LogOutLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Message.
+        /// </summary>
+        public static string MessageLabel {
+            get {
+                return ResourceManager.GetString("MessageLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to My Profile.
+        /// </summary>
+        public static string MyProfileLabel {
+            get {
+                return ResourceManager.GetString("MyProfileLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OnlineStatus.
+        /// </summary>
+        public static string OnlineStatus {
+            get {
+                return ResourceManager.GetString("OnlineStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pick Photo.
+        /// </summary>
+        public static string PickPhotoLabel {
+            get {
+                return ResourceManager.GetString("PickPhotoLabel", resourceCulture);
             }
         }
         
@@ -332,11 +449,38 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Settings.
+        /// </summary>
+        public static string SettingsLabel {
+            get {
+                return ResourceManager.GetString("SettingsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Starting....
         /// </summary>
         public static string Starting {
             get {
                 return ResourceManager.GetString("Starting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SteamProtocol.
+        /// </summary>
+        public static string SteamProtocol {
+            get {
+                return ResourceManager.GetString("SteamProtocol", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Store.
+        /// </summary>
+        public static string StoreLabel {
+            get {
+                return ResourceManager.GetString("StoreLabel", resourceCulture);
             }
         }
         
@@ -350,11 +494,29 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Take Photo.
+        /// </summary>
+        public static string TakePhotoLabel {
+            get {
+                return ResourceManager.GetString("TakePhotoLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unlocking parental account....
         /// </summary>
         public static string UnlockingParentalAccount {
             get {
                 return ResourceManager.GetString("UnlockingParentalAccount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Upload Avatar.
+        /// </summary>
+        public static string UploadAvatarLabel {
+            get {
+                return ResourceManager.GetString("UploadAvatarLabel", resourceCulture);
             }
         }
         
@@ -445,6 +607,15 @@ namespace sc {
         public static string WarningWorkaroundTriggered {
             get {
                 return ResourceManager.GetString("WarningWorkaroundTriggered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to WebLimiterDelay.
+        /// </summary>
+        public static string WebLimiterDelay {
+            get {
+                return ResourceManager.GetString("WebLimiterDelay", resourceCulture);
             }
         }
         

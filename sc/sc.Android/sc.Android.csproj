@@ -83,7 +83,10 @@
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\community.png" />
     <AndroidResource Include="Resources\drawable\edit_button.png" />
+    <AndroidResource Include="Resources\drawable\logout.png" />
     <AndroidResource Include="Resources\drawable\message_icon.png" />
+    <AndroidResource Include="Resources\drawable\photocamera.png" />
+    <AndroidResource Include="Resources\drawable\settings.png" />
     <AndroidResource Include="Resources\drawable\shopping_cart.png" />
     <AndroidResource Include="Resources\drawable\steam_icon.png" />
     <AndroidResource Include="Resources\drawable\unfriend.jpg" />

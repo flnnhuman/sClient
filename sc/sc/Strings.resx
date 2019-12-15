@@ -175,4 +175,72 @@
     <value>Logged off of Steam: {0}</value>
         <comment>{0} will be replaced by logging off reason (string)</comment>
   </data>
+    <data name="FriendsLabel" xml:space="preserve">
+    <value>Friends</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="StoreLabel" xml:space="preserve">
+    <value>Store</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="CommunityLabel" xml:space="preserve">
+    <value>Community</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="MyProfileLabel" xml:space="preserve">
+    <value>My Profile</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="CameraLabel" xml:space="preserve">
+    <value>Camera</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="SettingsLabel" xml:space="preserve">
+    <value>Settings</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="LogOutLabel" xml:space="preserve">
+    <value>LogOut</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="MessageLabel" xml:space="preserve">
+    <value>Message</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="TakePhotoLabel" xml:space="preserve">
+    <value>Take Photo</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="PickPhotoLabel" xml:space="preserve">
+    <value>Pick Photo</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="UploadAvatarLabel" xml:space="preserve">
+    <value>Upload Avatar</value>
+        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
+  </data>
+    <data name="isDebugLabel" xml:space="preserve">
+    <value>isDebug </value>
+  </data>
+    <data name="ConnectionTimeout" xml:space="preserve">
+    <value>ConnectionTimeout</value>
+  </data>
+    <data name="LoginLimitDelay" xml:space="preserve">
+    <value>LoginLimitDelay</value>
+  </data>
+    <data name="WebLimiterDelay" xml:space="preserve">
+    <value>WebLimiterDelay</value>
+  </data>
+    <data name="SteamProtocol" xml:space="preserve">
+    <value>SteamProtocol</value>
+  </data>
+    <data name="OnlineStatus" xml:space="preserve">
+    <value>OnlineStatus</value>
+  </data>
+    <data name="Global Setting" xml:space="preserve">
+    <value>Global Setting</value>
+  </data>
+    <data name="Account Settings" xml:space="preserve">
+    <value>Account Settings</value>
+  </data>
 </root>
