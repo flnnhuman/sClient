@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -90,6 +90,11 @@ namespace sc
         {
             Detail = new NavigationPage(new CameraPage());
             IsPresented = false;
+        }
+        
+        private void LogOut(object sender, EventArgs e)
+        {
+            sc.bot.Stop();
         }
     }
 }

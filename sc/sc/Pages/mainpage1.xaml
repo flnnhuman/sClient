@@ -43,6 +43,10 @@
                     <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
                        <Button Text="Camera" Clicked="CameraPage" BackgroundColor="Transparent" BorderColor="Transparent" />
                     </StackLayout>
+                    
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                        <Button Text="LogOut" Clicked="LogOut" BackgroundColor="Transparent" BorderColor="Transparent" />
+                    </StackLayout>
                 </StackLayout>   
                 </StackLayout>
             </ContentPage.Content>

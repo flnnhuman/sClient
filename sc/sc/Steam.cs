@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Acr.UserDialogs;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using Plugin.Toast;
 using SteamKit2;
 using SteamKit2.Unified.Internal;
 using Xamarin.Essentials;
@@ -1485,7 +1486,7 @@ namespace sc
             Bots.TryRemove(BotName, out _);
         }
 
-        private void Stop(bool skipShutdownEvent = false)
+        public async void Stop(bool skipShutdownEvent = false)
         {
             if (!KeepRunning) return;
 
@@ -1493,7 +1494,13 @@ namespace sc
             Logger.LogGenericInfo(Strings.BotStopping);
 
             if (SteamClient.IsConnected) Disconnect();
-
+            CrossToastPopUp.Current.ShowToastSuccess("Successfully Logged out");
+            await sc.Mainpage1.SecondPage.localContent.ClearCookiesAsync();
+            Application.Current.MainPage = new MainPage();
+            sc.Mainpage1.Friends = null;
+            sc.Mainpage1.SecondPage = null;
+            sc.Mainpage1 = new mainpage1();
+            
             if (!skipShutdownEvent) Utilities.InBackground(Events.OnBotShutdown);
         }
 
