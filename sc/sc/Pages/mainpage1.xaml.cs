@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -80,7 +80,8 @@ namespace sc
             }
 
             if (SecondPage == null) SecondPage = new second_page {Source = uri};
-            else SecondPage.Source = uri;
+            else
+                Device.BeginInvokeOnMainThread(()=>SecondPage.Source = uri);
 
             Detail = new NavigationPage(SecondPage);
             IsPresented = false;

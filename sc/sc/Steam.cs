@@ -795,7 +795,18 @@ namespace sc
                     }*/
 
                     /*await PluginsCore.OnBotLoggedOn(this).ConfigureAwait(false);*/
-                    Device.BeginInvokeOnMainThread(() => Application.Current.MainPage = sc.Mainpage1);
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        Application.Current.MainPage = sc.Mainpage1;
+                        
+                    });
+                    await Task.Delay(TimeSpan.FromSeconds(6));
+                    
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        if(sc.Mainpage1!=null)sc.Mainpage1.SecondPage.SetCookieClicked(null, null);
+                    });
+                    
                     RequestPersonaStateUpdate();
                     break;
                 case EResult.InvalidPassword:

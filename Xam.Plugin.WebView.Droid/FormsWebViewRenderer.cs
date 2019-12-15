@@ -303,13 +303,19 @@ namespace Xam.Plugin.WebView.Droid
             _callback.Reset();
 
             var response = string.Empty;
-            try
-            {
-                Device.BeginInvokeOnMainThread(() => Control.EvaluateJavascript(js, _callback));
-            }
-            catch (System.ObjectDisposedException e)
-            {
-            }
+           
+                Device.BeginInvokeOnMainThread(() =>
+                {
+                    try
+                    {
+                    Control.EvaluateJavascript(js, _callback);
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                });
+            
 
             // wait!
             await Task.Run(() =>

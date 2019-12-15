@@ -5,9 +5,10 @@
              x:Class="sc.second_page">
     <StackLayout Orientation="Vertical">
         <abstractions:FormsWebView x:Name="localContent"
+                                   x:FieldModifier="public"
                                    VerticalOptions="FillAndExpand"
                                    HorizontalOptions="FillAndExpand"
-                                   Source="https://store.steampowered.com/mobile" />
+                                   Source="https://steamcommunity.com" />
         <Button Text="Set data Cookie"
                 Clicked="SetCookieClicked" />
         <Button Text="Refresh"

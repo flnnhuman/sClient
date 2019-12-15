@@ -25,7 +25,7 @@ namespace sc
             localContent.Refresh();
         }
 
-        private async void SetCookieClicked(object sender, EventArgs e)
+        public async void SetCookieClicked(object sender, EventArgs e)
         {
             if (sc.bot == null) sc.Logger.LogNullError(nameof(sc.bot.WebHandler.WebBrowser.Cookies));
             else
@@ -34,28 +34,37 @@ namespace sc
                     DateTime expiresDate = DateTime.Now;
                     expiresDate = expiresDate.AddDays(30);
 
-                    var cookie = new Cookie
+                    var communityCookie = new Cookie
                     {
                         Name = myCookie.Name,
                         Value = myCookie.Value,
-                        Domain = new Uri(localContent.Source).Host,
+                        Domain = WebHandler.SteamCommunityURL,
                         Expired = false,
                         Expires = expiresDate,
                         Path = "/"
                     };
-                    await localContent.SetCookieAsync(cookie);
+                    var marketCookie = new Cookie
+                    {
+                        Name = myCookie.Name,
+                        Value = myCookie.Value,
+                        Domain = WebHandler.SteamStoreURL,
+                        Expired = false,
+                        Expires = expiresDate,
+                        Path = "/"
+                    };
+                    var helpCookie = new Cookie
+                    {
+                        Name = myCookie.Name,
+                        Value = myCookie.Value,
+                        Domain = WebHandler.SteamHelpURL,
+                        Expired = false,
+                        Expires = expiresDate,
+                        Path = "/"
+                    };
+                    string str1 =await localContent.SetCookieAsync(communityCookie).ConfigureAwait(false);
+                    string str2 =await localContent.SetCookieAsync(marketCookie).ConfigureAwait(true);
+                    string str3 =await localContent.SetCookieAsync(helpCookie);
                 }
-        }
-
-        private async void GetCookieClicked(object sender, EventArgs e)
-        {
-            Debug.WriteLine(await localContent.GetCookieAsync("sessionid"));
-            Debug.WriteLine(await localContent.GetCookieAsync("steamLoginSecure"));
-        }
-
-        private async void GetAllCookiesClicked(object sender, EventArgs e)
-        {
-            Debug.WriteLine(await localContent.GetAllCookiesAsync());
         }
 
         private void OnRefreshPageClicked(object sender, EventArgs e)
