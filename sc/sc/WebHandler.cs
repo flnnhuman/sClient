@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -874,7 +874,7 @@ namespace sc
                 },data
             );
             
-            return null;
+            return setAvatarResponse.Success.ToString();
         }
         	public async Task<T> UrlPostToMultipartFormJsonObjectWithSession<T>(string host, string request,[CanBeNull] IReadOnlyDictionary<(string Name, string FileName), byte[]> multipartFormData, Dictionary<string, string> data = null, string referer = null, ESession session = ESession.Lowercase, bool checkSessionPreemptively = true, byte maxTries = WebBrowser.MaxTries) where T : class {
 			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(request) || !Enum.IsDefined(typeof(ESession), session)) {

@@ -5,11 +5,10 @@
              x:Class="sc.CameraPage">
     <ContentPage.Content>
         <StackLayout>
-            <Button x:Name="takePhoto" Text="Take Photo"/>
-            <Button x:Name="pickPhoto" Text="Pick Photo"/>
-            <Button x:Name="takeVideo" Text="Take Video"/>
-            <Button x:Name="pickVideo" Text="Pick Video"/>
-
+            <Button x:Name="takePhoto" Clicked="TakePhoto_OnClicked" Text="Take Photo"/>
+            <Button x:Name="pickPhoto" Clicked="PickPhoto_OnClicked" Text="Pick Photo"/>
+            
+            <Button x:Name="Avatar" Clicked="Avatar_OnClicked"></Button>
             <Image x:Name="image"/>
         </StackLayout>
     </ContentPage.Content>

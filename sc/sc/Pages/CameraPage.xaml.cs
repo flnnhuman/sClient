@@ -1,117 +1,100 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using Plugin.Media;
 using Plugin.Media.Abstractions;
+using Plugin.Toast;
+using Plugin.Toast.Abstractions;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
 
 namespace sc
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
-    public partial class CameraPage : ContentPage
-    {
-       public CameraPage()
+  [XamlCompilation(XamlCompilationOptions.Compile)]
+  public partial class CameraPage : ContentPage
+  {
+    private string AvatarPath;
+    public CameraPage()
     {
       InitializeComponent();
+    }
 
-      takePhoto.Clicked += async (sender, args) =>
+    private async void TakePhoto_OnClicked(object sender, EventArgs e)
       {
-
-        if (!CrossMedia.Current.IsCameraAvailable || !CrossMedia.Current.IsTakePhotoSupported)
         {
-          DisplayAlert("No Camera", ":( No camera available.", "OK");
-          return;
-        }
 
-        var file = await CrossMedia.Current.TakePhotoAsync(new Plugin.Media.Abstractions.StoreCameraMediaOptions
-        {
-			Directory = "Test",
-			SaveToAlbum = true,
-			CompressionQuality = 75,
-			CustomPhotoSize = 50,
-			PhotoSize = PhotoSize.MaxWidthHeight,
-			MaxWidthHeight = 2000,
+          if (!CrossMedia.Current.IsCameraAvailable || !CrossMedia.Current.IsTakePhotoSupported)
+          {
+            DisplayAlert("No Camera", ":( No camera available.", "OK");
+            return;
+          }
+
+          var file = await CrossMedia.Current.TakePhotoAsync(new Plugin.Media.Abstractions.StoreCameraMediaOptions
+          {
+            Directory = "Test",
+            SaveToAlbum = true,
+            CompressionQuality = 75,
+            CustomPhotoSize = 50,
+            PhotoSize = PhotoSize.MaxWidthHeight,
+            MaxWidthHeight = 2000,
             DefaultCamera = CameraDevice.Front
-		});
+          });
 
-        if (file == null)
-          return;
+          if (file == null)
+            return;
 
-        DisplayAlert("File Location", file.Path, "OK");
+          DisplayAlert("File Location", file.Path, "OK");
+          AvatarPath = file.Path;
+          image.Source = ImageSource.FromStream(() =>
+          {
+            var stream = file.GetStream();
+            file.Dispose();
+            return stream;
+          });
+        }
+        ;
+      }
 
-        image.Source = ImageSource.FromStream(() =>
-        {
-          var stream = file.GetStream();
-          file.Dispose();
-          return stream;
-        });
-      };
-
-      pickPhoto.Clicked += async (sender, args) =>
+      private async void PickPhoto_OnClicked(object sender, EventArgs e)
       {
+
         if (!CrossMedia.Current.IsPickPhotoSupported)
         {
           DisplayAlert("Photos Not Supported", ":( Permission not granted to photos.", "OK");
           return;
         }
-         var file = await Plugin.Media.CrossMedia.Current.PickPhotoAsync(new Plugin.Media.Abstractions.PickMediaOptions
-                      {
-                          PhotoSize =  Plugin.Media.Abstractions.PhotoSize.Medium,
-                    
-                      });
+
+        var file = await Plugin.Media.CrossMedia.Current.PickPhotoAsync(new Plugin.Media.Abstractions.PickMediaOptions
+        {
+          PhotoSize = Plugin.Media.Abstractions.PhotoSize.Medium,
+
+        });
 
 
         if (file == null)
           return;
-
+        AvatarPath = file.Path;
         image.Source = ImageSource.FromStream(() =>
         {
           var stream = file.GetStream();
           file.Dispose();
           return stream;
         });
-      };
+      }
 
-      takeVideo.Clicked += async (sender, args) =>
+      private async void Avatar_OnClicked(object sender, EventArgs e)
       {
-        if (!CrossMedia.Current.IsCameraAvailable || !CrossMedia.Current.IsTakeVideoSupported)
+
+        var result = await sc.bot.WebHandler.UploadAvatar(AvatarPath, sc.bot.SteamID);
+        if (File.Exists(AvatarPath))
         {
-          DisplayAlert("No Camera", ":( No camera avaialble.", "OK");
-          return;
+          CrossToastPopUp.Current.ShowToastMessage(result, ToastLength.Short);
         }
 
-        var file = await CrossMedia.Current.TakeVideoAsync(new Plugin.Media.Abstractions.StoreVideoOptions
+        if (result == "true")
         {
-          Name = "video.mp4",
-          Directory = "DefaultVideos",
-        });
-
-        if (file == null)
-          return;
-
-        DisplayAlert("Video Recorded", "Location: " + file.Path, "OK");
-
-        file.Dispose();
-      };
-
-      pickVideo.Clicked += async (sender, args) =>
-      {
-        if (!CrossMedia.Current.IsPickVideoSupported)
-        {
-          DisplayAlert("Videos Not Supported", ":( Permission not granted to videos.", "OK");
-          return;
+          sc.bot.RequestPersonaStateUpdate();
         }
-        var file = await CrossMedia.Current.PickVideoAsync();
-
-        if (file == null)
-          return;
-
-        DisplayAlert("Video Selected", "Location: " + file.Path, "OK");
-        file.Dispose();
-      };
-    }    }
+      }
+  }
 }
