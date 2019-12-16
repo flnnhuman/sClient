@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using HtmlAgilityPack;
 using JetBrains.Annotations;
 using SteamKit2;
+using System.Globalization;
 
 namespace sc
 {
@@ -237,11 +238,22 @@ namespace sc
             WebBrowser.CookieContainer.Add(new Cookie("timezoneOffset", timeZoneOffset, "/", "." + SteamCommunityHost));
             WebBrowser.CookieContainer.Add(new Cookie("timezoneOffset", timeZoneOffset, "/", "." + SteamHelpHost));
             WebBrowser.CookieContainer.Add(new Cookie("timezoneOffset", timeZoneOffset, "/", "." + SteamStoreHost));
+            
+            WebBrowser.CookieContainer.Add(new Cookie("Steam_Language", Strings.CurrentLanguage, "/", "." + SteamCommunityHost));
+            WebBrowser.CookieContainer.Add(new Cookie("Steam_Language", Strings.CurrentLanguage, "/", "." + SteamHelpHost));
+            WebBrowser.CookieContainer.Add(new Cookie("Steam_Language", Strings.CurrentLanguage, "/", "." + SteamStoreHost));
+            
+            WebBrowser.CookieContainer.Add(new Cookie("dp_user_language", "1", "/", "." + SteamCommunityHost));
+            WebBrowser.CookieContainer.Add(new Cookie("dp_user_language", "1", "/", "." + SteamHelpHost));
+            WebBrowser.CookieContainer.Add(new Cookie("dp_user_language", "1", "/", "." + SteamStoreHost));
 
             WebBrowser.Cookies.Add(new MyCookie(sessionID, "sessionid"));
             WebBrowser.Cookies.Add(new MyCookie(steamLogin, "steamLogin"));
             WebBrowser.Cookies.Add(new MyCookie(steamLoginSecure, "steamLoginSecure"));
             WebBrowser.Cookies.Add(new MyCookie(timeZoneOffset, "timezoneOffset"));
+            WebBrowser.Cookies.Add(new MyCookie(Strings.CurrentLanguage, "Steam_Language"));
+            WebBrowser.Cookies.Add(new MyCookie("1", "dp_user_language"));
+            
             Logger.LogGenericInfo(Strings.Success);
 
             // Unlock Steam Parental if needed
@@ -847,7 +859,7 @@ namespace sc
             NotRegisteredYet,
             AccessDenied
         }
-        internal async Task<string?> UploadAvatar(string imagePath, SteamID steamID) {
+        internal async Task<string> UploadAvatar(string imagePath, SteamID steamID) {
             if (!File.Exists(imagePath)) {
                 Bot.Logger.LogNullError(nameof(imagePath));
                 return null;

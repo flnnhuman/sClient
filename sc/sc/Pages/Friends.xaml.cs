@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
+using System.Threading;
 using System.Text;
 using System.Threading.Tasks;
 using SteamKit2;
@@ -17,6 +19,7 @@ namespace sc
         public ChatPage CurrentChatPage;
         public Friends()
         {
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(sc.GlobalConfig.Language);
             InitializeComponent();
             FriendList = new List<Friend>();
             BindingContext = this;

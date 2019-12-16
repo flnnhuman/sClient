@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
 using Xamarin.Forms;
@@ -16,6 +17,7 @@ namespace sc
     {
         public SettingsPage()
         {
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(sc.GlobalConfig.Language);
             InitializeComponent();
             
             Debug.BindingContext =sc.GlobalConfig;

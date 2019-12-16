@@ -11,7 +11,7 @@ namespace sc
         public static Bot bot;
 
 
-        public static mainpage1 Mainpage1 = new mainpage1();
+        public static mainpage1 Mainpage1;
 
         public static readonly Logger Logger = new Logger(nameof(sc));
         public static SteamFriends.FriendMsgHistoryCallback MsgHistory;
@@ -45,6 +45,7 @@ namespace sc
 
         internal static async Task Init()
         {
+            Mainpage1 = new mainpage1();
             WebBrowser = new WebBrowser(Logger, true);
             //await RegisterBots().ConfigureAwait(false);
 

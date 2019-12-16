@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using Newtonsoft.Json;
 using SteamKit2;
@@ -14,6 +15,11 @@ namespace sc
 
         private const ushort DefaultWebLimiterDelay = 300;
 
+        private static string DefaultLanguage = CultureInfo.CurrentCulture.Name;
+
+        [JsonProperty(Required = Required.DisallowNull)]
+        public string Language { get; set; }  = DefaultLanguage;
+        
         //private const ProtocolTypes DefaultSteamProtocols = ProtocolTypes.All;
         private const ProtocolTypes DefaultSteamProtocols = ProtocolTypes.WebSocket;
 

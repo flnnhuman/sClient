@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Globalization;
+using System.IO;
+using System.Threading;
 using Plugin.Toast;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
@@ -12,10 +14,12 @@ namespace sc
         public App()
         {
             InitializeComponent();
+            sc.InitializeGlobalConfigAndDatabase();
             MainPage = new MainPage();
             //MainPage = new NavigationPage(new second_page());
             if (!Directory.Exists(Path.Combine(Bot.MainDir, "config")))
                 Directory.CreateDirectory(Path.Combine(Bot.MainDir, "config"));
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(sc.GlobalConfig.Language);
         }
 
         protected override async void OnResume()

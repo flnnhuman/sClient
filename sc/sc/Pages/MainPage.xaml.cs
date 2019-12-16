@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -20,8 +21,8 @@ namespace sc {
 		public static readonly string MainDir = FileSystem.AppDataDirectory;
 
 		public MainPage() {
+			Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(sc.GlobalConfig.Language);
 			InitializeComponent();
-			sc.InitializeGlobalConfigAndDatabase();
 			sc.Init().ConfigureAwait(false);
 		}
 
@@ -30,6 +31,7 @@ namespace sc {
 
 		private async void Button_OnClicked(object sender, EventArgs e) {
 			ThreadPool.QueueUserWorkItem(o => {
+				Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(sc.GlobalConfig.Language);
 				//bot = new Bot("bot", BotConfig, BotDatabase);
 				RegisterBot(Login);
 				sc.bot.InitModules().ConfigureAwait(false);

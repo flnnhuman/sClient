@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
+using System.Threading;
 using Plugin.Media;
 using Plugin.Media.Abstractions;
 using Plugin.Toast;
@@ -16,6 +18,7 @@ namespace sc
     private string AvatarPath;
     public CameraPage()
     {
+      Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(sc.GlobalConfig.Language);
       InitializeComponent();
     }
 
