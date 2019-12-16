@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -25,6 +25,7 @@ namespace sc
             LoginLimiterDelay.BindingContext = sc.GlobalConfig;
             WebLimiterDelay.BindingContext = sc.GlobalConfig;
             SteamProtocols.BindingContext = sc.GlobalConfig;
+            Language.BindingContext = sc.GlobalConfig;
             OnlineStatus.BindingContext = sc.bot.BotConfig;
         }
         void IsDebug(object sender, EventArgs eventArgs)
@@ -94,6 +95,61 @@ namespace sc
           
         }
         
-        
+        void LanguageChanged(object sender, EventArgs eventArgs)
+        {
+            
+            if (Language.On)
+            {
+                sc.GlobalConfig.Language = "en-US";
+            }
+            else  sc.GlobalConfig.Language = "ru-RU";
+            
+            sc.GlobalConfig.Write(Path.Combine(Bot.MainDir,"config.json"));
+          
+        }
+
+    }
+    
+    public class BooleanToStringConverter : IValueConverter
+    {
+        /// <summary>
+        /// This method is used to convert the bool to string.
+        /// </summary>
+        /// <param name="value">Gets the value.</param>
+        /// <param name="targetType">Gets the target type.</param>
+        /// <param name="parameter">Gets the parameter.</param>
+        /// <param name="culture">Gets the culture.</param>
+        /// <returns>Returns the string.</returns>
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value != null && parameter != null)
+            {
+               
+                    if ((bool)value)
+                    {
+                        return "ru-RU";
+                    }
+                    else
+                    {
+                        return "en-US";
+                    }
+               
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// This method is used to convert the string to bool.
+        /// </summary>
+        /// <param name="value">Gets the value.</param>
+        /// <param name="targetType">Gets the target type.</param>
+        /// <param name="parameter">Gets the parameter.</param>
+        /// <param name="culture">Gets the culture.</param>
+        /// <returns>Returns the string.</returns>
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return true;
+        }
     }
 }

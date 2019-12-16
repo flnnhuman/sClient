@@ -2,68 +2,73 @@
 
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:strings="clr-namespace:sc;assembly=sc"
+             xmlns:converters="clr-namespace:sc;assembly=sc"
              x:Class="sc.SettingsPage">
+    <ContentPage.Resources>
+        <strings:BooleanToStringConverter x:Key="BooleanToStringConverter" />
+    </ContentPage.Resources>
     <ContentPage.Content>
         <StackLayout>
           
             <StackLayout x:Name="GlobalSettings" >
-             
+                <StackLayout.Resources>
+                    <ResourceDictionary>
+                        <converters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
+                    </ResourceDictionary>  
+                </StackLayout.Resources>
+                
                 <TableView Intent="Settings">
                     <TableRoot>
-                        <TableSection Title="Global Settings">
+                        <TableSection Title="{x:Static strings:Strings.Global_Setting}">
                             <SwitchCell x:Name="Debug"
-                                        Text="Is Debug Enabled"
+                                        Text="{x:Static strings:Strings.isDebugLabel}"
                                         On="{Binding Debug}"
                                         OnChanged="IsDebug"/>
                             
-                            <EntryCell x:Name="ConnectionTimeout" Label="ConnectionTimeout" 
+                            <EntryCell x:Name="ConnectionTimeout" Label="{x:Static strings:Strings.ConnectionTimeout}" 
                                        Placeholder="{Binding ConnectionTimeout}" 
                                        Keyboard="Numeric" 
                                        Completed="ConnectionTimeoutCompleted"/>
                             
-                            <EntryCell x:Name="LoginLimiterDelay" Label="LoginLimiterDelay" 
+                            <EntryCell x:Name="LoginLimiterDelay" Label="{x:Static strings:Strings.LoginLimitDelay}" 
                                        Placeholder="{Binding LoginLimiterDelay}" 
                                        Keyboard="Numeric" 
                                        Completed="LoginLimiterDelayCompleted"/>
                            
-                            <EntryCell x:Name="WebLimiterDelay" Label="WebLimiterDelay" 
+                            <EntryCell x:Name="WebLimiterDelay" Label="{x:Static strings:Strings.WebLimiterDelay}"
                                        Placeholder="{Binding WebLimiterDelay}" 
                                        Keyboard="Numeric" 
                                        Completed="WebLimiterDelayCompleted"/>
 
-                            <EntryCell x:Name="SteamProtocols" Label="SteamProtocols" 
+                            <EntryCell x:Name="SteamProtocols" Label="{x:Static strings:Strings.SteamProtocol}" 
                                        Placeholder="{Binding SteamProtocols}" 
                                        Keyboard="Numeric" 
                                        Completed="SteamProtocolsCompleted"/>
-                            
+                            <SwitchCell x:Name="Language"
+                                        
+                                        Text="{x:Static strings:Strings.LanguageLabel}"
+                                        On="{Binding Language }"
+                                        OnChanged="LanguageChanged"/>
                             
                         </TableSection>
                     </TableRoot>
                 </TableView>   
-                
             </StackLayout>
-            
-            
             <StackLayout x:Name="AccountSettings" >
                 <TableView Intent="Settings">
                     <TableRoot>
-                        <TableSection Title="Global Settings">
+                        <TableSection Title="{x:Static strings:Strings.Account_Settings}">
+                            
                             <SwitchCell x:Name="OnlineStatus"
-                                        Text="OnlineStatus"
-                                        On="{Binding OnlineStatus}"
+                                        Text="{x:Static strings:Strings.OnlineStatus}"
+                                        On="{Binding OnlineStatus, Converter={StaticResource BooleanToStringConverter}}"
                                         OnChanged="OnlineStatusCompleted"/>
-                            
-                           
-                            
                             
                         </TableSection>
                     </TableRoot>
                 </TableView>  
             </StackLayout>
-            
-            <!--
- 
-  "UseLoginKeys": true -->
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>

@@ -195,7 +195,6 @@
   </data>
     <data name="ErrorDatabaseInvalid" xml:space="preserve">
     <value>Не удалось загрузить базу данных, если эта ошибка будет повтораться - пожалуйста, удалите {0} для пересоздания базы данных!</value>
-        <comment>{0} will be replaced by file's path</comment>
   </data>
     <data name="Welcome" xml:space="preserve">
     <value>Похоже, вы впервые запустили программу, добро пожаловать!</value>
@@ -205,7 +204,6 @@
   </data>
     <data name="WarningWorkaroundTriggered" xml:space="preserve">
     <value>Сработал временный обход для ошибки {0}.</value>
-        <comment>{0} will be replaced by the bug's name provided by ASF</comment>
   </data>
     <data name="FileLoaded" xml:space="preserve">
     <value>{0} был загружен.</value>
@@ -281,5 +279,14 @@
       </data>
     <data name="Account Settings" xml:space="preserve">
         <value>Настройки аккаунта</value>
+      </data>
+    <data name="CurrentLanguage" xml:space="preserve">
+        <value>russian</value>
+      </data>
+    <data name="CurrentLanguageFormatted" xml:space="preserve">
+        <value>ru-RU</value>
+      </data>
+    <data name="LanguageLabel" xml:space="preserve">
+        <value>Язык</value>
       </data>
 </root>

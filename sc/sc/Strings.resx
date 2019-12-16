@@ -243,4 +243,13 @@
     <data name="Account Settings" xml:space="preserve">
     <value>Account Settings</value>
   </data>
+    <data name="CurrentLanguage" xml:space="preserve">
+        <value>english</value>
+      </data>
+    <data name="CurrentLanguageFormatted" xml:space="preserve">
+        <value>en-US</value>
+      </data>
+    <data name="LanguageLabel" xml:space="preserve">
+        <value>Language</value>
+      </data>
 </root>

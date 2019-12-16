@@ -269,6 +269,24 @@ namespace sc {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to english.
+        /// </summary>
+        public static string CurrentLanguage {
+            get {
+                return ResourceManager.GetString("CurrentLanguage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to en-US.
+        /// </summary>
+        public static string CurrentLanguageFormatted {
+            get {
+                return ResourceManager.GetString("CurrentLanguageFormatted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Your bot config is invalid. Please verify content of {0} and try again!.
         /// </summary>
         public static string ErrorBotConfigInvalid {
@@ -373,6 +391,15 @@ namespace sc {
         public static string isDebugLabel {
             get {
                 return ResourceManager.GetString("isDebugLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Language.
+        /// </summary>
+        public static string LanguageLabel {
+            get {
+                return ResourceManager.GetString("LanguageLabel", resourceCulture);
             }
         }
         

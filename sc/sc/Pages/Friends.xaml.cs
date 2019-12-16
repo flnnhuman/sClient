@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Threading;
@@ -9,6 +10,7 @@ using SteamKit2;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using System.Runtime.CompilerServices;
+using MvvmHelpers;
 using sc.Chat.View;
 
 namespace sc
@@ -21,11 +23,11 @@ namespace sc
         {
             Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(sc.GlobalConfig.Language);
             InitializeComponent();
-            FriendList = new List<Friend>();
+            FriendList = new ObservableRangeCollection<Friend>();
             BindingContext = this;
         }
 
-        public List<Friend> FriendList { get; set; }
+        public ObservableRangeCollection<Friend> FriendList { get; set; }
 
         private void OnListViewItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
@@ -52,14 +54,29 @@ namespace sc
 
     public class Friend : INotifyPropertyChanged
     {
-        public byte[] AvatarHash { get; set; }
-
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
         public EFriendRelationship Relationship;
         public SteamID steamID;
-        public string Nickname { get; set; }
-        public EPersonaState OnlineStatus { get; set; }
-
-        public string avatarUrl { get; set; }
+        public byte[] AvatarHash { get; set; }
+        public string Nickname { get {return nickname; }
+            set
+            {
+                nickname = value;
+                PropertyChanged(this, new PropertyChangedEventArgs("Nickname"));
+            }
+        }
+        private string nickname;
+        public EPersonaState OnlineStatus
+        {
+            get { return onlineStatus;}
+            set
+            {
+                onlineStatus = value;
+                PropertyChanged(this, new PropertyChangedEventArgs("OnlineStatus"));  
+            } 
+        }
+        private EPersonaState onlineStatus;
+        public string AvatarUrl { get; set; }
         
         public Friend(SteamID steamID)
         {
@@ -69,7 +86,7 @@ namespace sc
             AvatarHash = sc.bot.SteamFriends.GetFriendAvatar(steamID);
             if (AvatarHash!=null)
             {
-                avatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
+                AvatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
                             Utilities.ByteArrayToHexString(AvatarHash).Substring(0, 2).ToLower() + "/" +
                             Utilities.ByteArrayToHexString(AvatarHash).ToLower() + "_full.jpg";  
             }
@@ -85,7 +102,7 @@ namespace sc
             AvatarHash = avatarHash;
             if (avatarHash!=null)
             {
-                avatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
+                AvatarUrl = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/" +
                             Utilities.ByteArrayToHexString(avatarHash).Substring(0, 2).ToLower() + "/" +
                             Utilities.ByteArrayToHexString(avatarHash).ToLower() + "_full.jpg";  
             }
@@ -93,10 +110,6 @@ namespace sc
             
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        public void OnPropertyChanged([CallerMemberName]string prop = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-        } 
+     
     }
 }

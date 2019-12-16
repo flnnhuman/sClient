@@ -68,6 +68,7 @@
                 <e p="MainPage.xaml.g.cs" t="Include" />
                 <e p="mainpage1.xaml.g.cs" t="Include" />
                 <e p="second page.xaml.g.cs" t="Include" />
+                <e p="SettingsPage.xaml.g.cs" t="Include" />
               </e>
               <e p="sc.AssemblyInfo.cs" t="Include" />
             </e>

@@ -1137,7 +1137,8 @@ namespace sc
 
             if (callback.FriendID != SteamID)
             {
-                bool exists =sc.Mainpage1.Friends.FriendList.Exists(friend1 =>(friend1.steamID == callback.FriendID));
+                bool exists =sc.Mainpage1.Friends.FriendList.Any(friend1 =>(friend1.steamID == callback.FriendID));
+                
                 bool isFriend = SteamFriends.GetFriendRelationship(callback.FriendID) == EFriendRelationship.Friend;
                 if (!exists && isFriend)
                 {
@@ -1147,8 +1148,9 @@ namespace sc
 
                 if (exists && isFriend)
                 {
-                    int index = sc.Mainpage1.Friends.FriendList.FindIndex(friend1 =>
-                        (friend1.steamID == callback.FriendID));
+                  
+                    int index = sc.Mainpage1.Friends.FriendList.IndexOf(
+                        sc.Mainpage1.Friends.FriendList.FirstOrDefault(friend1 => (friend1.steamID == callback.FriendID)));
                     
                     if (sc.Mainpage1.Friends.FriendList[index].Nickname !=callback.Name)
                     {

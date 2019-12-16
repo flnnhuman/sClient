@@ -2,13 +2,14 @@
 
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:strings = "clr-namespace:sc;assembly=sc"
              x:Class="sc.CameraPage">
     <ContentPage.Content>
         <StackLayout>
-            <Button x:Name="takePhoto" Clicked="TakePhoto_OnClicked" Text="Take Photo"/>
-            <Button x:Name="pickPhoto" Clicked="PickPhoto_OnClicked" Text="Pick Photo"/>
+            <Button x:Name="takePhoto" Clicked="TakePhoto_OnClicked" Text="{x:Static strings:Strings.TakePhotoLabel}"/>
+            <Button x:Name="pickPhoto" Clicked="PickPhoto_OnClicked" Text="{x:Static strings:Strings.PickPhotoLabel}"/>
             
-            <Button x:Name="Avatar" Clicked="Avatar_OnClicked"></Button>
+            <Button x:Name="Avatar" Clicked="Avatar_OnClicked" Text="{x:Static strings:Strings.UploadAvatarLabel}"></Button>
             <Image x:Name="image"/>
         </StackLayout>
     </ContentPage.Content>
