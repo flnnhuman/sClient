@@ -15,7 +15,8 @@ namespace sc
         {
             InitializeComponent();
             sc.InitializeGlobalConfigAndDatabase();
-            MainPage = new MainPage();
+            MainPage = new SplashScreen();
+            //MainPage = new MainPage();
             //MainPage = new NavigationPage(new second_page());
             if (!Directory.Exists(Path.Combine(Bot.MainDir, "config")))
                 Directory.CreateDirectory(Path.Combine(Bot.MainDir, "config"));

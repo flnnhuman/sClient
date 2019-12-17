@@ -65,6 +65,7 @@
                   </e>
                 </e>
                 <e p="Friends.xaml.g.cs" t="Include" />
+                <e p="LoadingAnimationPage.xaml.g.cs" t="Include" />
                 <e p="MainPage.xaml.g.cs" t="Include" />
                 <e p="mainpage1.xaml.g.cs" t="Include" />
                 <e p="second page.xaml.g.cs" t="Include" />
@@ -110,6 +111,8 @@
           <e p="second page.xaml.cs" t="Include" />
           <e p="SettingsPage.xaml" t="Include" />
           <e p="SettingsPage.xaml.cs" t="Include" />
+          <e p="SplashScreen.xaml" t="Include" />
+          <e p="SplashScreen.xaml.cs" t="Include" />
         </e>
         <e p="RuntimeCompability.cs" t="Include" />
         <e p="sc.cs" t="Include" />
